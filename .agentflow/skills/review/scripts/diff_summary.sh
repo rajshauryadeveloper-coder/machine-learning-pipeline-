@@ -4,10 +4,12 @@
 
 set -e
 
-AGENTFLOW_ROOT="${AGENTFLOW_ROOT:-.}"
+AGENTFLOW_ROOT="${AGENTFLOW_ROOT:-.agentflow}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
+SLUG="$("$SCRIPT_DIR/../../../scripts/worklog_path.sh" "$BRANCH" 2>/dev/null || echo "$BRANCH")"
 BASE_BRANCH="${BASE_BRANCH:-main}"
-ARTIFACTS_DIR="${AGENTFLOW_ROOT}/worklogs/${BRANCH}/artifacts"
+ARTIFACTS_DIR="${AGENTFLOW_ROOT}/worklogs/${SLUG}/artifacts"
 TIMESTAMP=$(date +"%Y%m%d%H%M%S")
 OUTPUT_FILE="${ARTIFACTS_DIR}/diff-summary-${TIMESTAMP}.md"
 

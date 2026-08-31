@@ -1,15 +1,34 @@
 from contextlib import contextmanager
-from typing import Generator
+from typing import Any, Generator
 
 import psycopg
+from psycopg.rows import dict_row
 
 from src.config import settings
 
 
 @contextmanager
-def get_connection() -> Generator[psycopg.Connection, None, None]:
-    """Yield a PostgreSQL connection using application settings."""
-    conn = psycopg.connect(settings.database_url)
+def get_connection(
+    autocommit: bool = False,
+) -> Generator[psycopg.Connection, None, None]:
+    """Yield a standard PostgreSQL connection using application settings."""
+    conn = psycopg.connect(settings.database_url, autocommit=autocommit)
+    try:
+        yield conn
+    finally:
+        conn.close()
+
+
+@contextmanager
+def get_dict_connection(
+    autocommit: bool = False,
+) -> Generator[psycopg.Connection[dict[str, Any]], None, None]:
+    """Yield a PostgreSQL connection with dict_row factory for dictionary rows."""
+    conn = psycopg.connect(
+        settings.database_url,
+        row_factory=dict_row,
+        autocommit=autocommit,
+    )
     try:
         yield conn
     finally:

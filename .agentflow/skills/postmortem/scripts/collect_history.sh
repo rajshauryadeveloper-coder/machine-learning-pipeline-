@@ -5,7 +5,7 @@ set -e
 AGENTFLOW_ROOT="${AGENTFLOW_ROOT:-.}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BRANCH="${BRANCH:-$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)}"
-SLUG="$("$SCRIPT_DIR/../../scripts/worklog_path.sh" "$BRANCH" 2>/dev/null || echo "$BRANCH")"
+SLUG="$("$SCRIPT_DIR/../../../scripts/worklog_path.sh" "$BRANCH" 2>/dev/null || echo "$BRANCH")"
 ATTEMPTS_DIR="$AGENTFLOW_ROOT/worklogs/$SLUG/attempts"
 ARTIFACTS_DIR="$AGENTFLOW_ROOT/worklogs/$SLUG/artifacts"
 TIMESTAMP=$(date -u +"%Y%m%dT%H%M%SZ")

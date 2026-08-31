@@ -2,42 +2,113 @@
 type: documentation
 status: active
 created: 2026-08-31T17:41:00Z
+updated: 2026-08-31T18:25:00Z
 ---
 
-# Project Architecture
+# Project Architecture & Relational Schema
 
-## Overview
+## System Overview
 
 ```
-┌─────────────┐     HTTP      ┌──────────────────┐     SQL      ┌────────────┐
-│  html/      │ ◄──────────── │  src/main.py     │ ───────────► │ PostgreSQL │
-│  (browser)  │               │  (FastAPI)       │              │ (local)    │
-└─────────────┘               └──────────────────┘              └────────────┘
-                                      │
-                                      ▼
-                              ┌──────────────────┐
-                              │  src/config.py   │
-                              │  src/database.py │
-                              └──────────────────┘
+┌─────────────┐     HTTP / JSON      ┌──────────────────┐     SQL (psycopg)   ┌────────────┐
+│  html/      │ ◄──────────────────► │  src/main.py     │ ──────────────────► │ PostgreSQL │
+│  Dashboard  │                      │  (FastAPI + v1)  │                     │ (local)    │
+└─────────────┘                      └──────────────────┘                     └────────────┘
+                                              │
+                                              ▼
+                                     ┌──────────────────┐
+                                     │  src/db/schema   │
+                                     │  src/db/seed     │
+                                     │  src/schemas     │
+                                     │  src/api/v1      │
+                                     └──────────────────┘
 ```
 
-## Layers
+## Relational Database Schema (5 Tables)
 
-| Layer | Path | Responsibility |
-| --- | --- | --- |
-| Frontend | `html/` | Static pages with inline CSS/JS |
-| API | `src/main.py` | HTTP routes, request/response handling |
-| Config | `src/config.py` | Environment-based settings via pydantic-settings |
-| Data | `src/database.py` | PostgreSQL connection management |
-| Tests | `tests/` | Unit tests with mocked database in health checks |
+Each table is designed with 5–10 columns, standard primary keys, indices, and foreign key constraints:
 
-## Conventions
+```mermaid
+erDiagram
+    CATEGORIES ||--o{ PRODUCTS : categorizes
+    CUSTOMERS ||--o{ ORDERS : places
+    ORDERS ||--|{ ORDER_ITEMS : contains
+    PRODUCTS ||--o{ ORDER_ITEMS : ordered_in
 
-- No frontend build tooling (no npm, webpack, React).
-- All Python dependencies managed via `uv` and `pyproject.toml`.
-- Secrets loaded from environment variables, never committed.
-- Agent workflows tracked in `.agentflow/worklogs/`.
+    CATEGORIES {
+        int id PK
+        varchar name
+        varchar slug
+        text description
+        boolean is_active
+        timestamptz created_at
+    }
 
-## Initialization Status
+    CUSTOMERS {
+        int id PK
+        varchar first_name
+        varchar last_name
+        varchar email
+        varchar phone
+        varchar address
+        varchar city
+        varchar country
+        timestamptz created_at
+    }
 
-Repository initialized on 2026-08-31. See [worklog](../.agentflow/worklogs/main/SUMMARY.md) for details.
+    PRODUCTS {
+        int id PK
+        int category_id FK
+        varchar name
+        varchar sku
+        text description
+        numeric price
+        int stock_quantity
+        numeric rating
+        boolean is_available
+        timestamptz created_at
+    }
+
+    ORDERS {
+        int id PK
+        int customer_id FK
+        varchar order_status
+        numeric total_amount
+        varchar shipping_address
+        varchar payment_method
+        varchar tracking_number
+        timestamptz ordered_at
+    }
+
+    ORDER_ITEMS {
+        int id PK
+        int order_id FK
+        int product_id FK
+        int quantity
+        numeric unit_price
+        numeric discount_amount
+        numeric subtotal
+        timestamptz created_at
+    }
+```
+
+## Seed Record Counts
+
+| Table | Columns | Seed Count | Notes |
+| --- | --- | --- | --- |
+| `categories` | 6 | 10 | Root taxonomy |
+| `customers` | 9 | 40 | Realistic buyer profiles |
+| `products` | 10 | 30 | Catalog with price, rating, stock |
+| `orders` | 8 | 60 | Order headers with statuses |
+| `order_items` | 8 | **200** | **Largest table** (200 records) |
+
+## Modules & Responsibilities
+
+| Path | Responsibility |
+| --- | --- |
+| `src/database.py` | Connection pools, context managers (`get_dict_connection`, `get_connection`). |
+| `src/db/schema.py` | DDL schema creation, table truncation, schema dropping, metadata inspection. |
+| `src/db/seed.py` | Seed generator creating 200 records in `order_items` and dependent entities. |
+| `src/schemas/models.py` | Pydantic response models, pagination envelopes, and analytics models. |
+| `src/api/v1/` | Modular REST API routers with search, filters, pagination, and sorting. |
+| `html/index.html` | Zero-dependency responsive data explorer and management dashboard. |

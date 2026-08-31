@@ -5,9 +5,11 @@
 set -e
 
 # Default variables
-AGENTFLOW_ROOT="${AGENTFLOW_ROOT:-.}"
+AGENTFLOW_ROOT="${AGENTFLOW_ROOT:-.agentflow}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
-WORKLOG_DIR="${AGENTFLOW_ROOT}/worklogs/${BRANCH}"
+SLUG="$("$SCRIPT_DIR/../../../scripts/worklog_path.sh" "$BRANCH" 2>/dev/null || echo "$BRANCH")"
+WORKLOG_DIR="${AGENTFLOW_ROOT}/worklogs/${SLUG}"
 LATEST_ATTEMPT_FILE=$(ls -1t "${WORKLOG_DIR}/attempts/"*.md 2>/dev/null | head -n 1 || true)
 
 echo "Running Pre-Check for branch: ${BRANCH}"

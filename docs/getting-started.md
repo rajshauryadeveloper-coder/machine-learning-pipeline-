@@ -70,6 +70,22 @@ psql -h 127.0.0.1 -U shaurya -d ecommerce_database -c "SELECT 1"
 
 When the database is reachable, the `/health` endpoint returns `"database": true`.
 
+## Reset and Seed Database
+
+To reset the schema, create the 5 relational tables, and seed 200 records in the largest table:
+
+```bash
+uv run python -m src.db.seed
+```
+
+Or execute via the helper script:
+
+```bash
+./scripts/seed.sh
+```
+
+Or trigger from the web dashboard at `http://127.0.0.1:8000/` or via API `POST /api/v1/database/reset-and-seed`.
+
 ## Docker
 
 Build and run the container:

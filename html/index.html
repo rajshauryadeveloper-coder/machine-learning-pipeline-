@@ -3,14 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Machine Learning Pipeline</title>
+  <title>eCommerce Data Explorer & Machine Learning Pipeline</title>
   <style>
     :root {
-      color-scheme: light dark;
-      --bg: #0f172a;
-      --card: #1e293b;
+      --bg: #090d16;
+      --card-bg: #131b2e;
+      --card-border: #1e293b;
+      --header-bg: #0f172a;
       --text: #f8fafc;
+      --text-muted: #94a3b8;
       --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --accent-dim: rgba(56, 189, 248, 0.12);
+      --success: #10b981;
+      --success-dim: rgba(16, 185, 129, 0.15);
+      --warning: #f59e0b;
+      --warning-dim: rgba(245, 158, 11, 0.15);
+      --danger: #ef4444;
+      --danger-dim: rgba(239, 68, 68, 0.15);
+      --table-stripe: rgba(255, 255, 255, 0.02);
+      --table-hover: rgba(56, 189, 248, 0.06);
     }
 
     * {
@@ -20,68 +32,805 @@
     }
 
     body {
-      font-family: system-ui, -apple-system, sans-serif;
-      background: linear-gradient(160deg, #0f172a 0%, #1e3a5f 100%);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
       color: var(--text);
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--card-border);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-icon {
+      background: linear-gradient(135deg, var(--accent) 0%, #6366f1 100%);
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: 0.5rem;
       display: grid;
       place-items: center;
-      padding: 2rem;
+      font-weight: 700;
+      color: #fff;
     }
 
-    main {
-      background: var(--card);
-      border-radius: 1rem;
-      padding: 2.5rem;
-      max-width: 40rem;
-      width: 100%;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+    .brand h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
     }
 
-    h1 {
-      font-size: 1.75rem;
-      margin-bottom: 0.5rem;
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
     }
 
-    p {
-      line-height: 1.6;
-      opacity: 0.9;
-      margin-bottom: 1.5rem;
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 500;
     }
 
-    .status {
+    .badge-success {
+      background: var(--success-dim);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-warning {
+      background: var(--warning-dim);
+      color: var(--warning);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .badge-accent {
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    .badge-danger {
+      background: var(--danger-dim);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .btn {
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
       padding: 0.5rem 1rem;
-      border-radius: 999px;
-      background: rgba(56, 189, 248, 0.15);
-      color: var(--accent);
-      font-size: 0.9rem;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s ease-in-out;
+      text-decoration: none;
     }
 
+    .btn-primary {
+      background: var(--accent);
+      color: #0f172a;
+    }
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      color: #fff;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--card-border);
+    }
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--accent);
+    }
+
+    .container {
+      max-width: 1380px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.5rem 2rem;
+      flex: 1;
+    }
+
+    /* KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .kpi-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .kpi-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .kpi-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .kpi-sub {
+      font-size: 0.75rem;
+      color: var(--accent);
+    }
+
+    /* Main Workspace Card */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 0.75rem;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Nav Tabs */
+    .tabs {
+      display: flex;
+      background: rgba(0, 0, 0, 0.2);
+      border-bottom: 1px solid var(--card-border);
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      padding: 1rem 1.25rem;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+      background: rgba(56, 189, 248, 0.04);
+    }
+
+    .tab-count {
+      font-size: 0.75rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Toolbar */
+    .toolbar {
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .search-box {
+      position: relative;
+      flex: 1;
+      max-width: 320px;
+    }
+
+    .search-box input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--card-border);
+      border-radius: 0.5rem;
+      padding: 0.5rem 0.75rem 0.5rem 2rem;
+      color: var(--text);
+      font-size: 0.875rem;
+      outline: none;
+    }
+
+    .search-box input:focus {
+      border-color: var(--accent);
+    }
+
+    .search-box svg {
+      position: absolute;
+      left: 0.65rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 1rem;
+      height: 1rem;
+      fill: var(--text-muted);
+    }
+
+    /* Table Container */
+    .table-container {
+      overflow-x: auto;
+      min-height: 360px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.875rem;
+    }
+
+    th {
+      background: rgba(0, 0, 0, 0.25);
+      padding: 0.75rem 1rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--card-border);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      vertical-align: middle;
+      color: #e2e8f0;
+    }
+
+    tr:nth-child(even) td {
+      background: var(--table-stripe);
+    }
+
+    tr:hover td {
+      background: var(--table-hover);
+    }
+
+    /* Pagination */
+    .pagination {
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--card-border);
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    .pagination-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .page-btn {
+      background: transparent;
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 0.35rem 0.75rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .page-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .page-btn:not(:disabled):hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--accent);
+    }
+
+    /* Analytics Panel */
+    .analytics-panel {
+      padding: 1.5rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .analytics-section {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--card-border);
+      border-radius: 0.5rem;
+      padding: 1.25rem;
+    }
+
+    .analytics-section h3 {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      color: var(--accent);
+    }
+
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--card-border);
+      margin-top: auto;
+    }
   </style>
 </head>
 <body>
-  <main>
-    <h1>Machine Learning Pipeline</h1>
-    <p>
-      Python FastAPI backend with a static HTML frontend. Use the API health
-      endpoint to verify the application and database connection.
-    </p>
-    <div class="status" id="status">Checking API health…</div>
-  </main>
+  <header>
+    <div class="brand">
+      <div class="brand-icon">ML</div>
+      <div>
+        <h1>eCommerce & ML Pipeline Dashboard</h1>
+        <p style="font-size: 0.8rem; color: var(--text-muted);">PostgreSQL 5-Table Relational Schema & REST API</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span class="badge badge-accent" id="db-status-badge">Checking DB…</span>
+      <a href="/docs" target="_blank" class="btn btn-outline">Interactive OpenAPI Docs ↗</a>
+      <button class="btn btn-primary" id="reseed-btn" onclick="triggerReseed()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+        Reset & Reseed Database
+      </button>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Top KPIs -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-title">Largest Table Records</div>
+        <div class="kpi-value" id="kpi-order-items">200</div>
+        <div class="kpi-sub">order_items table</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Total Orders</div>
+        <div class="kpi-value" id="kpi-orders">-</div>
+        <div class="kpi-sub">orders table (60 records)</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Total Products</div>
+        <div class="kpi-value" id="kpi-products">-</div>
+        <div class="kpi-sub">products table (30 records)</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Registered Customers</div>
+        <div class="kpi-value" id="kpi-customers">-</div>
+        <div class="kpi-sub">customers table (40 records)</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Total Revenue</div>
+        <div class="kpi-value" id="kpi-revenue">-</div>
+        <div class="kpi-sub" id="kpi-aov">Avg Order: -</div>
+      </div>
+    </div>
+
+    <!-- Main Workspace -->
+    <div class="card">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('order_items')" id="tab-order_items">
+          Order Items <span class="tab-count" id="count-order_items">200</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('orders')" id="tab-orders">
+          Orders <span class="tab-count" id="count-orders">60</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('products')" id="tab-products">
+          Products <span class="tab-count" id="count-products">30</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('customers')" id="tab-customers">
+          Customers <span class="tab-count" id="count-customers">40</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('categories')" id="tab-categories">
+          Categories <span class="tab-count" id="count-categories">10</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('analytics')" id="tab-analytics">
+          Analytics & Insights
+        </button>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar" id="toolbar">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24"><path d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+          <input type="text" id="search-input" placeholder="Search current table…" oninput="handleSearch()">
+        </div>
+        <div style="font-size: 0.85rem; color: var(--text-muted);" id="table-info">
+          Showing records from PostgreSQL
+        </div>
+      </div>
+
+      <!-- Table View -->
+      <div class="table-container" id="table-view">
+        <table id="data-table">
+          <thead id="table-head"></thead>
+          <tbody id="table-body">
+            <tr><td colspan="8" style="text-align: center; padding: 2rem;">Loading data…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Analytics View (hidden by default) -->
+      <div class="analytics-panel" id="analytics-view" style="display: none;">
+        <div class="analytics-section">
+          <h3>Top 5 Selling Products by Revenue</h3>
+          <table style="width: 100%;">
+            <thead>
+              <tr><th>Product</th><th>Units</th><th>Revenue</th></tr>
+            </thead>
+            <tbody id="top-products-body"></tbody>
+          </table>
+        </div>
+        <div class="analytics-section">
+          <h3>Revenue & Sales by Category</h3>
+          <table style="width: 100%;">
+            <thead>
+              <tr><th>Category</th><th>Items Sold</th><th>Total Revenue</th></tr>
+            </thead>
+            <tbody id="category-breakdown-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" id="pagination-bar">
+        <div id="pagination-label">Page 1 of 1 (0 total items)</div>
+        <div class="pagination-actions">
+          <button class="page-btn" id="btn-prev" onclick="prevPage()">Previous</button>
+          <span id="page-indicator" style="font-weight: 600; color: var(--accent);">1</span>
+          <button class="page-btn" id="btn-next" onclick="nextPage()">Next</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Machine Learning Pipeline Backend & PostgreSQL Relational Schema • FastAPI & psycopg
+  </footer>
+
   <script>
-    fetch("/health")
-      .then((response) => response.json())
-      .then((data) => {
-        const dbStatus = data.database ? "connected" : "unavailable";
-        document.getElementById("status").textContent =
-          `API ${data.status} · database ${dbStatus}`;
-      })
-      .catch(() => {
-        document.getElementById("status").textContent = "API unavailable";
-      });
+    let currentTab = "order_items";
+    let currentPage = 1;
+    let totalPages = 1;
+    let pageSize = 20;
+    let searchQuery = "";
+    let searchTimeout = null;
+
+    const endpoints = {
+      order_items: "/api/v1/order-items",
+      orders: "/api/v1/orders",
+      products: "/api/v1/products",
+      customers: "/api/v1/customers",
+      categories: "/api/v1/categories"
+    };
+
+    function formatCurrency(val) {
+      return "$" + Number(val || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatDate(val) {
+      if (!val) return "-";
+      return new Date(val).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      currentPage = 1;
+      searchQuery = "";
+      document.getElementById("search-input").value = "";
+
+      document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
+      document.getElementById("tab-" + tab).classList.add("active");
+
+      if (tab === "analytics") {
+        document.getElementById("toolbar").style.display = "none";
+        document.getElementById("table-view").style.display = "none";
+        document.getElementById("pagination-bar").style.display = "none";
+        document.getElementById("analytics-view").style.display = "grid";
+        loadAnalytics();
+      } else {
+        document.getElementById("toolbar").style.display = "flex";
+        document.getElementById("table-view").style.display = "block";
+        document.getElementById("pagination-bar").style.display = "flex";
+        document.getElementById("analytics-view").style.display = "none";
+        loadTableData();
+      }
+    }
+
+    function handleSearch() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        searchQuery = document.getElementById("search-input").value.trim();
+        currentPage = 1;
+        loadTableData();
+      }, 300);
+    }
+
+    function prevPage() {
+      if (currentPage > 1) {
+        currentPage--;
+        loadTableData();
+      }
+    }
+
+    function nextPage() {
+      if (currentPage < totalPages) {
+        currentPage++;
+        loadTableData();
+      }
+    }
+
+    async function loadTableData() {
+      const tbody = document.getElementById("table-body");
+      const thead = document.getElementById("table-head");
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 2rem;">Loading data…</td></tr>';
+
+      let url = `${endpoints[currentTab]}?page=${currentPage}&page_size=${pageSize}`;
+      if (searchQuery) {
+        url += `&search=${encodeURIComponent(searchQuery)}`;
+      }
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Failed to fetch records");
+        const data = await res.json();
+
+        totalPages = data.total_pages || 1;
+        document.getElementById("pagination-label").textContent = `Page ${data.page} of ${totalPages} (${data.total} total items)`;
+        document.getElementById("page-indicator").textContent = data.page;
+        document.getElementById("btn-prev").disabled = data.page <= 1;
+        document.getElementById("btn-next").disabled = data.page >= totalPages;
+
+        renderTable(data.items);
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; color: var(--danger); padding: 2rem;">Error: ${err.message}</td></tr>`;
+      }
+    }
+
+    function renderTable(items) {
+      const thead = document.getElementById("table-head");
+      const tbody = document.getElementById("table-body");
+
+      if (items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 2rem; color: var(--text-muted);">No records found.</td></tr>';
+        return;
+      }
+
+      if (currentTab === "order_items") {
+        thead.innerHTML = `
+          <tr>
+            <th>ID</th>
+            <th>Order ID</th>
+            <th>Product</th>
+            <th>SKU</th>
+            <th>Qty</th>
+            <th>Unit Price</th>
+            <th>Discount</th>
+            <th>Subtotal</th>
+            <th>Created</th>
+          </tr>`;
+        tbody.innerHTML = items.map(i => `
+          <tr>
+            <td><strong>#${i.id}</strong></td>
+            <td><span class="badge badge-accent">Order #${i.order_id}</span></td>
+            <td>${i.product_name || `Product #${i.product_id}`}</td>
+            <td><code>${i.product_sku || '-'}</code></td>
+            <td>${i.quantity}</td>
+            <td>${formatCurrency(i.unit_price)}</td>
+            <td>${Number(i.discount_amount) > 0 ? `<span style="color:var(--success)">-${formatCurrency(i.discount_amount)}</span>` : '$0.00'}</td>
+            <td><strong>${formatCurrency(i.subtotal)}</strong></td>
+            <td>${formatDate(i.created_at)}</td>
+          </tr>
+        `).join("");
+      } else if (currentTab === "orders") {
+        thead.innerHTML = `
+          <tr>
+            <th>Order ID</th>
+            <th>Customer</th>
+            <th>Status</th>
+            <th>Total Amount</th>
+            <th>Payment</th>
+            <th>Items Count</th>
+            <th>Tracking #</th>
+            <th>Date</th>
+          </tr>`;
+        tbody.innerHTML = items.map(o => `
+          <tr>
+            <td><strong>#${o.id}</strong></td>
+            <td>${o.customer_name}<br><small style="color:var(--text-muted)">${o.customer_email}</small></td>
+            <td><span class="badge ${o.order_status === 'completed' ? 'badge-success' : o.order_status === 'shipped' ? 'badge-accent' : 'badge-warning'}">${o.order_status}</span></td>
+            <td><strong>${formatCurrency(o.total_amount)}</strong></td>
+            <td><code>${o.payment_method}</code></td>
+            <td>${o.items ? o.items.length : 0} items</td>
+            <td><small>${o.tracking_number || '-'}</small></td>
+            <td>${formatDate(o.ordered_at)}</td>
+          </tr>
+        `).join("");
+      } else if (currentTab === "products") {
+        thead.innerHTML = `
+          <tr>
+            <th>ID</th>
+            <th>Product Name</th>
+            <th>Category</th>
+            <th>SKU</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Rating</th>
+            <th>Status</th>
+          </tr>`;
+        tbody.innerHTML = items.map(p => `
+          <tr>
+            <td>#${p.id}</td>
+            <td><strong>${p.name}</strong></td>
+            <td><span class="badge badge-accent">${p.category_name || '-'}</span></td>
+            <td><code>${p.sku}</code></td>
+            <td><strong>${formatCurrency(p.price)}</strong></td>
+            <td>${p.stock_quantity} in stock</td>
+            <td>⭐ ${Number(p.rating).toFixed(2)}</td>
+            <td><span class="badge ${p.is_available ? 'badge-success' : 'badge-danger'}">${p.is_available ? 'Available' : 'Out of Stock'}</span></td>
+          </tr>
+        `).join("");
+      } else if (currentTab === "customers") {
+        thead.innerHTML = `
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>City</th>
+            <th>Country</th>
+            <th>Joined</th>
+          </tr>`;
+        tbody.innerHTML = items.map(c => `
+          <tr>
+            <td>#${c.id}</td>
+            <td><strong>${c.first_name} ${c.last_name}</strong></td>
+            <td>${c.email}</td>
+            <td>${c.phone || '-'}</td>
+            <td>${c.city || '-'}</td>
+            <td>${c.country}</td>
+            <td>${formatDate(c.created_at)}</td>
+          </tr>
+        `).join("");
+      } else if (currentTab === "categories") {
+        thead.innerHTML = `
+          <tr>
+            <th>ID</th>
+            <th>Category Name</th>
+            <th>Slug</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Created</th>
+          </tr>`;
+        tbody.innerHTML = items.map(cat => `
+          <tr>
+            <td>#${cat.id}</td>
+            <td><strong>${cat.name}</strong></td>
+            <td><code>${cat.slug}</code></td>
+            <td>${cat.description || '-'}</td>
+            <td><span class="badge ${cat.is_active ? 'badge-success' : 'badge-danger'}">${cat.is_active ? 'Active' : 'Inactive'}</span></td>
+            <td>${formatDate(cat.created_at)}</td>
+          </tr>
+        `).join("");
+      }
+    }
+
+    async function loadAnalytics() {
+      try {
+        const res = await fetch("/api/v1/analytics/overview");
+        const data = await res.json();
+
+        const topTbody = document.getElementById("top-products-body");
+        topTbody.innerHTML = data.top_products.map(tp => `
+          <tr>
+            <td><strong>${tp.name}</strong><br><small style="color:var(--text-muted)">${tp.sku}</small></td>
+            <td>${tp.units_sold}</td>
+            <td><strong>${formatCurrency(tp.total_revenue)}</strong></td>
+          </tr>
+        `).join("");
+
+        const catTbody = document.getElementById("category-breakdown-body");
+        catTbody.innerHTML = data.category_breakdown.map(cb => `
+          <tr>
+            <td><strong>${cb.category_name}</strong></td>
+            <td>${cb.items_sold}</td>
+            <td><strong>${formatCurrency(cb.total_revenue)}</strong></td>
+          </tr>
+        `).join("");
+      } catch (err) {
+        console.error("Failed to load analytics", err);
+      }
+    }
+
+    async function checkHealthAndKPIs() {
+      try {
+        const healthRes = await fetch("/health");
+        const healthData = await healthRes.json();
+        const badge = document.getElementById("db-status-badge");
+        if (healthData.database) {
+          badge.className = "badge badge-success";
+          badge.textContent = "● PostgreSQL Connected";
+        } else {
+          badge.className = "badge badge-danger";
+          badge.textContent = "● Database Disconnected";
+        }
+
+        const analyticsRes = await fetch("/api/v1/analytics/overview");
+        if (analyticsRes.ok) {
+          const a = await analyticsRes.json();
+          document.getElementById("kpi-order-items").textContent = a.overview.total_order_items;
+          document.getElementById("kpi-orders").textContent = a.overview.total_orders;
+          document.getElementById("kpi-products").textContent = a.overview.total_products;
+          document.getElementById("kpi-customers").textContent = a.overview.total_customers;
+          document.getElementById("kpi-revenue").textContent = formatCurrency(a.overview.total_revenue);
+          document.getElementById("kpi-aov").textContent = "Avg Order: " + formatCurrency(a.overview.average_order_value);
+
+          document.getElementById("count-order_items").textContent = a.overview.total_order_items;
+          document.getElementById("count-orders").textContent = a.overview.total_orders;
+          document.getElementById("count-products").textContent = a.overview.total_products;
+          document.getElementById("count-customers").textContent = a.overview.total_customers;
+        }
+      } catch (err) {
+        console.error("Health check failed", err);
+      }
+    }
+
+    async function triggerReseed() {
+      if (!confirm("Are you sure you want to reset the database and re-seed 200 records in the largest table?")) return;
+      const btn = document.getElementById("reseed-btn");
+      btn.disabled = true;
+      btn.textContent = "Resetting & Seeding…";
+      try {
+        const res = await fetch("/api/v1/database/reset-and-seed", { method: "POST" });
+        const data = await res.json();
+        alert(data.message || "Database seeded!");
+        await checkHealthAndKPIs();
+        loadTableData();
+      } catch (err) {
+        alert("Error resetting database: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg> Reset & Reseed Database`;
+      }
+    }
+
+    // Initialize
+    checkHealthAndKPIs();
+    loadTableData();
   </script>
 </body>
 </html>

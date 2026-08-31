@@ -2,10 +2,11 @@
 # Language: bash (swap for .py version if preferred)
 set -euo pipefail
 
-# Define environment variables with defaults
 AGENTFLOW_ROOT="${AGENTFLOW_ROOT:-.agentflow}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-WORKLOG_DIR="${WORKLOG_DIR:-$AGENTFLOW_ROOT/worklogs/$BRANCH}"
+SLUG="$("$SCRIPT_DIR/../../../scripts/worklog_path.sh" "$BRANCH" 2>/dev/null || echo "$BRANCH")"
+WORKLOG_DIR="${WORKLOG_DIR:-$AGENTFLOW_ROOT/worklogs/$SLUG}"
 STAGE="${STAGE:-implement}"
 
 # Determine Attempt Number

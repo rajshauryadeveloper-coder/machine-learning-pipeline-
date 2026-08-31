@@ -4,10 +4,11 @@ set -euo pipefail
 # Note: The language choice for this script is customizable (can be swapped for .py)
 # pre_check.sh - Verify preconditions before running tests
 
-# Environment Setup
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
-AGENTFLOW_ROOT=${AGENTFLOW_ROOT:-$(pwd)}
-ATTEMPTS_DIR="${AGENTFLOW_ROOT}/worklogs/${BRANCH}/attempts"
+SLUG="$("$SCRIPT_DIR/../../../scripts/worklog_path.sh" "$BRANCH" 2>/dev/null || echo "$BRANCH")"
+AGENTFLOW_ROOT=${AGENTFLOW_ROOT:-.agentflow}
+ATTEMPTS_DIR="${AGENTFLOW_ROOT}/worklogs/${SLUG}/attempts"
 AGENT_CONTEXT="${AGENTFLOW_ROOT}/AGENT_CONTEXT.md"
 
 echo "Running pre-checks for test skill..."

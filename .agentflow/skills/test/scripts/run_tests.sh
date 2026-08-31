@@ -4,7 +4,7 @@ set -uo pipefail
 AGENTFLOW_ROOT="${AGENTFLOW_ROOT:-.agentflow}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BRANCH="${BRANCH:-$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)}"
-SLUG="$("$SCRIPT_DIR/../../scripts/worklog_path.sh" "$BRANCH" 2>/dev/null || echo "$BRANCH")"
+SLUG="$("$SCRIPT_DIR/../../../scripts/worklog_path.sh" "$BRANCH" 2>/dev/null || echo "$BRANCH")"
 TEST_CMD="${TEST_CMD:-uv run pytest tests/ --cov=src}"
 LOG_DIR="$AGENTFLOW_ROOT/worklogs/$SLUG/artifacts"
 COVERAGE_THRESHOLD="${COVERAGE_THRESHOLD:-60}"

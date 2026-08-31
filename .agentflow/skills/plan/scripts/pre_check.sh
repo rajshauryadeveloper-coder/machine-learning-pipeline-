@@ -15,7 +15,7 @@ if [[ "$BRANCH" == "HEAD" ]]; then
     exit 1
 fi
 
-SLUG="$("$SCRIPT_DIR/../../scripts/worklog_path.sh" "$BRANCH")"
+SLUG="$("$SCRIPT_DIR/../../../scripts/worklog_path.sh" "$BRANCH")"
 WORKLOG_DIR="$AGENTFLOW_ROOT/worklogs/$SLUG"
 
 echo "Running Pre-Check for plan skill..."

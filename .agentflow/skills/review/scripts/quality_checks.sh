@@ -2,13 +2,13 @@
 # Quality Checks
 # Note: The language for this script is swappable (.sh or .py)
 
-set -e
-
-LINT_CMD="${LINT_CMD:-ruff check .}"
-TYPE_CMD="${TYPE_CMD:-mypy .}"
-AGENTFLOW_ROOT="${AGENTFLOW_ROOT:-.}"
+LINT_CMD="${LINT_CMD:-uv run flake8 src/ tests/}"
+TYPE_CMD="${TYPE_CMD:-uv run black --check src/ tests/}"
+AGENTFLOW_ROOT="${AGENTFLOW_ROOT:-.agentflow}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
-ARTIFACTS_DIR="${AGENTFLOW_ROOT}/worklogs/${BRANCH}/artifacts"
+SLUG="$("$SCRIPT_DIR/../../../scripts/worklog_path.sh" "$BRANCH" 2>/dev/null || echo "$BRANCH")"
+ARTIFACTS_DIR="${AGENTFLOW_ROOT}/worklogs/${SLUG}/artifacts"
 TIMESTAMP=$(date +"%Y%m%d%H%M%S")
 OUTPUT_FILE="${ARTIFACTS_DIR}/quality-${TIMESTAMP}.md"
 

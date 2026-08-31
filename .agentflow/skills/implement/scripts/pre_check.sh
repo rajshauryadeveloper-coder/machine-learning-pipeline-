@@ -5,7 +5,7 @@ set -euo pipefail
 AGENTFLOW_ROOT="${AGENTFLOW_ROOT:-.agentflow}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo HEAD)"
-SLUG="$("$SCRIPT_DIR/../../scripts/worklog_path.sh" "$BRANCH" 2>/dev/null || echo unknown)"
+SLUG="$("$SCRIPT_DIR/../../../scripts/worklog_path.sh" "$BRANCH" 2>/dev/null || echo unknown)"
 WORKLOG_DIR="${WORKLOG_DIR:-$AGENTFLOW_ROOT/worklogs/$SLUG}"
 
 echo "Running Pre-Check for implement skill..."

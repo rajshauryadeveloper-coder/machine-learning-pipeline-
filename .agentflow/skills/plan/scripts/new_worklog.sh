@@ -25,7 +25,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
-SLUG="$("$SCRIPT_DIR/../../scripts/worklog_path.sh" "$BRANCH")"
+SLUG="$("$SCRIPT_DIR/../../../scripts/worklog_path.sh" "$BRANCH")"
 WORKLOG_DIR="$AGENTFLOW_ROOT/worklogs/$SLUG"
 TIMESTAMP="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
