@@ -39,6 +39,12 @@ updated: 2026-08-31T17:41:00Z
 - **Attempts:** 3
 - **Key Lesson:** The agent initially failed because it mocked the `PyJWT` decode function incorrectly in `test_middleware.py`. It learned that it must ensure test mocks align strictly with the external library's actual exception hierarchy (e.g., catching `jwt.ExpiredSignatureError` specifically rather than a generic Exception). Future authentication tasks should reference these mock structures.
 
+### [2026-08-31] feature/seed-database-and-apis
+- **Branch/Worklog:** `feature/seed-database-and-apis`
+- **Outcome:** Merged
+- **Attempts:** 1
+- **Key Lesson:** Schema & Seeding Modularity: Deterministic seeding coupled with Pydantic pagination envelopes ensures predictable testability and clean REST APIs.
+
 <!--
 Agents: Append new entries ABOVE this comment block, keeping the most recent entries at the top. Use the format specified above.
 -->
