@@ -14,9 +14,9 @@ from pathlib import Path
 from typing import Any
 
 # Pricing benchmarks (USD per million tokens)
-# Gemini 3.7 Flash: Input $0.075 / 1M, Output $0.30 / 1M
+# Gemini 3.7 Flash introductory rate: Input $0.75 / 1M, Output $3.75 / 1M
 PRICING = {
-    "gemini_flash": {"input_cost_per_m": 0.075, "output_cost_per_m": 0.30},
+    "gemini_flash": {"input_cost_per_m": 0.75, "output_cost_per_m": 3.75},
     "gemini_pro": {"input_cost_per_m": 1.25, "output_cost_per_m": 5.00},
 }
 
@@ -145,16 +145,20 @@ def generate_token_summary_markdown() -> str:
     stats = parse_conversation_transcript()
     cost_str = f"${stats['estimated_cost_usd']:.5f}"
 
+    in_cost = stats["total_input_tokens"] / 1_000_000 * PRICING["gemini_flash"]["input_cost_per_m"]
+    out_cost = stats["total_output_tokens"] / 1_000_000 * PRICING["gemini_flash"]["output_cost_per_m"]
+    think_cost = stats["total_thinking_tokens"] / 1_000_000 * PRICING["gemini_flash"]["output_cost_per_m"]
+
     md = f"""### AI Agent Token Consumption & Cost Breakdown
 
 | Metric | Token Count | Estimated Cost (USD) |
 | :--- | :--- | :--- |
-| **Input Tokens (Prompt & Tool Context)** | `{stats['total_input_tokens']:,}` | `${(stats['total_input_tokens'] / 1_000_000 * 0.075):.5f}` |
-| **Output Tokens (Code, APIs, Docs)** | `{stats['total_output_tokens']:,}` | `${(stats['total_output_tokens'] / 1_000_000 * 0.30):.5f}` |
-| **Thinking / Reasoning Tokens** | `{stats['total_thinking_tokens']:,}` | `${(stats['total_thinking_tokens'] / 1_000_000 * 0.30):.5f}` |
+| **Input Tokens (Prompt & Tool Context)** | `{stats['total_input_tokens']:,}` | `${in_cost:.5f}` |
+| **Output Tokens (Code, APIs, Docs)** | `{stats['total_output_tokens']:,}` | `${out_cost:.5f}` |
+| **Thinking / Reasoning Tokens** | `{stats['total_thinking_tokens']:,}` | `${think_cost:.5f}` |
 | **Total Agent Tokens Spent** | **`{stats['total_tokens']:,}`** | **`{cost_str}`** |
 
-*Rates based on Gemini 3.7 Flash ($0.075 / 1M input tokens, $0.30 / 1M output tokens).*
+*Rates based on Gemini 3.7 Flash ($0.75 / 1M input tokens, $3.75 / 1M output tokens).*
 """
     return md
 

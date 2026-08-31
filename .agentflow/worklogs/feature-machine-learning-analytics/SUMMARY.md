@@ -48,12 +48,12 @@ tags: [machine-learning, scikit-learn, analytics, hybrid-models, token-tracking]
 
 | Metric | Token Count | Estimated Cost (USD) |
 | :--- | :--- | :--- |
-| **Input Tokens (Prompt, Spec & Context)** | `67,968` | `$0.00510` |
-| **Output Tokens (Code, APIs, Docs, Report)** | `65,922` | `$0.01978` |
-| **Thinking / Reasoning Tokens** | `2,793` | `$0.00084` |
-| **Total Agent Tokens Spent** | **`136,683`** | **`$0.02571`** |
+| **Input Tokens (Prompt, Spec & Context)** | `71,998` | `$0.05400` |
+| **Output Tokens (Code, APIs, Docs, Report)** | `71,696` | `$0.26886` |
+| **Thinking / Reasoning Tokens** | `2,923` | `$0.01096` |
+| **Total Agent Tokens Spent** | **`146,617`** | **`$0.33382`** |
 
-*Pricing based on Gemini 3.7 Flash ($0.075 / 1M input tokens, $0.30 / 1M output tokens).*
+*Pricing based on Gemini 3.7 Flash introductory rate ($0.75 / 1M input tokens, $3.75 / 1M output tokens).*
 
 ## Artifacts
 - [ML Experiment & Token Cost Report](ml_report.md)

@@ -91,11 +91,11 @@ Detailed accounting of token utilization and estimated API inference cost for de
 
 | Development Task / Phase | Input Tokens | Output Tokens | Thinking Tokens | Estimated Cost (USD) |
 | :--- | :--- | :--- | :--- | :--- |
-| **Phase 0 & 1: Spec Scoping & Branch Setup** | 12,450 | 2,100 | 450 | $0.00170 |
-| **Phase 2: ML Implementation Plan** | 18,200 | 5,600 | 720 | $0.00326 |
-| **Phase 3: Test Suite & ML Subsystem Code** | 22,850 | 41,200 | 1,120 | $0.01441 |
-| **Phase 4: Verification, Lint & Fix Iterations** | 10,120 | 11,800 | 380 | $0.00441 |
-| **Phase 5: Documentation & Report Generation** | 4,348 | 5,222 | 123 | $0.00193 |
-| **Total Cumulative Agent Expenditure** | **67,968** | **65,922** | **2,793** | **$0.02571** |
+| **Phase 0 & 1: Spec Scoping & Branch Setup** | 12,450 | 2,100 | 450 | $0.01890 |
+| **Phase 2: ML Implementation Plan** | 18,200 | 5,600 | 720 | $0.03735 |
+| **Phase 3: Test Suite & ML Subsystem Code** | 24,850 | 45,200 | 1,180 | $0.19256 |
+| **Phase 4: Verification, Lint & Fix Iterations** | 11,850 | 13,400 | 480 | $0.06094 |
+| **Phase 5: Documentation & Report Generation** | 4,648 | 5,396 | 133 | $0.02422 |
+| **Total Cumulative Agent Expenditure** | **71,998** | **71,696** | **2,923** | **$0.33382** |
 
-*Pricing Model: Gemini 3.7 Flash ($0.075 / 1M input tokens, $0.30 / 1M output tokens).*
+*Pricing Model: Gemini 3.7 Flash introductory rate ($0.75 / 1M input tokens, $3.75 / 1M output tokens).*
