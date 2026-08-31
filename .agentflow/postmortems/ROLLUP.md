@@ -21,6 +21,12 @@ updated: 2026-08-31T17:41:00Z
 
 ---
 
+### [2026-08-31] Workflow improvements from Initialize Repository postmortem
+- **Branch/Worklog:** `main` / [Worklog Link](../worklogs/main/SUMMARY.md)
+- **Outcome:** Merged
+- **Attempts:** 1
+- **Key Lesson:** Added plan and merge skills, branch-slug worklog convention (`feature/foo` → `feature-foo`), postmortem as mandatory terminal stage, and coverage gate (60%) in test skill. Prevents orphaned worklogs when branches are renamed.
+
 ### [2026-08-31] Initialize Repository Workspace
 - **Branch/Worklog:** `main` / [Worklog Link](../worklogs/main/SUMMARY.md)
 - **Outcome:** Merged

@@ -2,6 +2,7 @@
 type: workflow
 status: active
 created: 2026-08-31T16:23:00Z
+updated: 2026-08-31T17:45:00Z
 ---
 
 # Agent Workflow Engine
@@ -19,36 +20,70 @@ created: 2026-08-31T16:23:00Z
                               +-----------+-----------+
                               |                       |
                               v                       v
-                          [MERGE]                [ESCALATE]
+                           (Merge)               [ESCALATE]
+                              |
+                              v
+                        (Postmortem)
+                              |
+                              v
+                          [CLOSED]
 ```
 
 ## Transitions
 
 | From Stage | To Stage | Trigger / Condition | Concrete Example |
 | --- | --- | --- | --- |
-| `Plan` | `Implement` | Plan approved/completed | Agent creates `plans/add_auth.md`, user approves, agent triggers `implement`. |
-| `Implement` | `Test` | Code written & compiled | Agent finishes `auth.py`, runs `pytest`, triggers `test` skill for deep analysis. |
-| `Test` | `Implement` | Tests fail | `test` skill finds failing `test_auth.py`, increments attempt in worklog, chains back to `implement`. |
-| `Test` | `Review` | Tests pass | Coverage hits 90%, agent triggers `review` skill for style checks. |
-| `Review` | `Implement` | Linter/Style fails | `flake8` fails, agent logs failure, chains back to `implement` to fix spacing. |
-| `Review` | `Merge` | Final approval | Clean code, agent creates PR, marks state as `MERGING`. |
-| *Any* | `Escalate` | Max retries reached | `implement` fails tests 3 times, agent sets status to `ESCALATED`. |
+| `Plan` | `Implement` | Plan approved/completed | Agent creates `plans/add_auth.md`, worklog initialized, chains to `implement`. |
+| `Implement` | `Test` | Code written & compiled | Agent finishes `auth.py`, triggers `test` skill. |
+| `Test` | `Implement` | Tests fail | `test` skill finds failing `test_auth.py`, increments attempt, chains back to `implement`. |
+| `Test` | `Review` | Tests pass | All tests green, agent triggers `review` skill. |
+| `Test` | `Debug` | Root cause unclear | Repeated failures with no clear fix; invoke `debug` before next `implement`. |
+| `Review` | `Implement` | Linter/Style fails | `flake8` fails, agent logs failure, chains back to `implement`. |
+| `Review` | `Merge` | Final approval | Clean code, all acceptance criteria met. |
+| `Merge` | `Postmortem` | Pushed to remote | Commit on `main`, worklog marked `merged`. |
+| `Postmortem` | `Closed` | Retrospective written | `postmortem.md` and `ROLLUP.md` updated. |
+| *Any* | `Escalate` | Max retries reached | 3 failed test cycles; status set to `ESCALATED`, postmortem still required. |
 
 *Note: The `research` skill can optionally precede `implement` when the codebase or API is unfamiliar. The `debug` skill can be invoked when test failures are non-trivial and the root cause is unclear.*
+
+## Worklog & Branch Conventions
+
+Derived from the [Initialize Repository postmortem](worklogs/main/postmortem.md):
+
+1. **Create branch first**, then worklog:
+   ```bash
+   git checkout -b feature/add-auth
+   bash .agentflow/skills/plan/scripts/new_worklog.sh --title "Add Auth" ...
+   ```
+2. **Slug mapping**: `feature/add-auth` → `worklogs/feature-add-auth/SUMMARY.md`
+3. **Never rename** a branch after its worklog is created. If unavoidable, create a new worklog and archive the old one with a redirect note.
+4. **Bootstrap tasks** (repo init only) may use `main` with `ALLOW_MAIN_BRANCH=1`.
+5. **Terminal states** (`merged`, `abandoned`, `escalated`) must always run the `postmortem` skill.
+
+## Testing Strategy
+
+| Layer | When | Example |
+| --- | --- | --- |
+| Unit | Always | Mock `check_database_connection` in health tests |
+| Integration | After schema/API contracts exist | Live Postgres tests in `tests/integration/` |
+| Coverage gate | Review stage | Flag modules below 60% coverage for follow-up |
 
 ## Retry Limits
 
 | Metric | Limit | Consequence of Exceeding |
 | --- | --- | --- |
-| `max_attempts_per_stage` | 3 | Task moves to `ESCALATED`. Human intervention required to fix the logic flaw the agent cannot resolve. |
+| `max_attempts_per_stage` | 3 | Task moves to `ESCALATED`. Human intervention required. |
 | `max_workflow_steps` | 15 | Task moves to `ESCALATED`. Prevents infinite loops. |
 | `max_parallel_tasks` | 4 | Additional tasks queue up until a slot is free. |
 
 ## How Chaining Works
 
-AgentFlow orchestrates execution by reading the `chain_to` field in the frontmatter of each `SKILL.md` file. 
-When a skill completes its objective successfully, the agent looks at `chain_to` and automatically invokes the next skill.
-For instance, if `skills/test/SKILL.md` has `chain_to: skills/review/SKILL.md`, passing the tests automatically triggers the review process. If the tests fail, the agent overrides the chain and invokes `skills/implement/SKILL.md` to fix the code, incrementing the attempt counter in the worklog.
+AgentFlow orchestrates execution by reading the `chain_to` field in the frontmatter of each `SKILL.md` file.
+When a skill completes successfully, the agent invokes the next skill in the chain.
+If a skill fails, `chain_on_failure` overrides the success chain (e.g., `test` → `implement` on failure).
+
+**Full success chain:**
+`plan` → `implement` → `test` → `review` → `merge` → `postmortem`
 
 ## Parallel Dispatch
 
@@ -91,6 +126,7 @@ In a 3-task DAG, Task A (Database Schema) and Task B (Frontend UI) have no depen
 ## Escalation
 
 When a task exceeds its retry limits or encounters an unrecoverable error, the agent MUST explicitly escalate. The agent will:
-1. Update the `Current Stage` in `WORKLOG.md` to `escalated`.
+1. Update the `Current Stage` in `worklogs/<slug>/SUMMARY.md` to `escalated`.
 2. Write a clear summary of the blockage in the `What Was Done` section, including specific error messages, the failed skill, and what was attempted so far.
-3. Stop execution and notify the user via the chat interface.
+3. Run the `postmortem` skill to capture lessons even on failure.
+4. Stop execution and notify the user via the chat interface.

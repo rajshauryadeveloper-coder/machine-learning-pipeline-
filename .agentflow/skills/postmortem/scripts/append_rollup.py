@@ -13,34 +13,36 @@ def main() -> None:
     
     args = parser.parse_args()
     
-    rollup_path = os.path.join(os.environ.get("AGENTFLOW_ROOT", "."), "postmortems", "ROLLUP.md")
+    rollup_path = os.path.join(
+        os.environ.get("AGENTFLOW_ROOT", ".agentflow"), "postmortems", "ROLLUP.md"
+    )
     
     if not os.path.exists(rollup_path):
         # Create it if it doesn't exist
         os.makedirs(os.path.dirname(rollup_path), exist_ok=True)
         with open(rollup_path, 'w') as f:
-            f.write("# Postmortems Rollup\n\n<!-- Entries appear below this line. -->\n")
+            f.write("# Postmortems Rollup\n\n<!--\nAgents: Append new entries ABOVE this comment block, keeping the most recent entries at the top.\n-->\n")
             
     with open(rollup_path, 'r') as f:
         content = f.read()
         
-    marker = "<!-- Entries appear below this line. -->"
     date_str = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
-    
+
     new_entry = (
-        f"### {args.branch} — {date_str}\n"
-        f"**Outcome:** {args.outcome}\n"
-        f"**Attempts:** {args.attempts}\n"
-        f"**Key lesson:** {args.lesson}\n"
-        f"**Details:** {args.details}\n"
+        f"### [{date_str}] {args.branch}\n"
+        f"- **Branch/Worklog:** `{args.branch}`\n"
+        f"- **Outcome:** {args.outcome.capitalize()}\n"
+        f"- **Attempts:** {args.attempts}\n"
+        f"- **Key Lesson:** {args.lesson} {args.details}\n"
     )
-    
-    if marker in content:
-        parts = content.split(marker)
-        updated_content = parts[0] + marker + "\n\n" + new_entry + parts[1].lstrip()
+
+    comment_start = content.find("<!--")
+    if comment_start != -1:
+        updated_content = (
+            content[:comment_start].rstrip() + "\n\n" + new_entry + "\n" + content[comment_start:]
+        )
     else:
-        # Fallback if marker is missing
-        updated_content = content + "\n\n" + new_entry
+        updated_content = content.rstrip() + "\n\n" + new_entry + "\n"
         
     with open(rollup_path, 'w') as f:
         f.write(updated_content)

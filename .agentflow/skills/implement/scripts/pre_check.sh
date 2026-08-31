@@ -2,44 +2,55 @@
 # Language: bash (swap for .py version if preferred)
 set -euo pipefail
 
-# Define environment variables with defaults
 AGENTFLOW_ROOT="${AGENTFLOW_ROOT:-.agentflow}"
-BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-WORKLOG_DIR="${WORKLOG_DIR:-$AGENTFLOW_ROOT/worklogs/$BRANCH}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo HEAD)"
+SLUG="$("$SCRIPT_DIR/../../scripts/worklog_path.sh" "$BRANCH" 2>/dev/null || echo unknown)"
+WORKLOG_DIR="${WORKLOG_DIR:-$AGENTFLOW_ROOT/worklogs/$SLUG}"
 
 echo "Running Pre-Check for implement skill..."
 
-# Check 1: Refuse to run on main/master branches
+# Check 1: Refuse to run on main/master unless bootstrap bypass is set
 if [[ "$BRANCH" == "main" || "$BRANCH" == "master" ]]; then
-    echo "ERROR: Refusing to run on $BRANCH branch. Please create a feature branch."
+    if [[ "${ALLOW_MAIN_BRANCH:-}" != "1" ]]; then
+        echo "ERROR: Refusing to run on $BRANCH branch."
+        echo "Hint: Create a feature branch, or set ALLOW_MAIN_BRANCH=1 for bootstrap tasks only."
+        exit 1
+    fi
+    echo "WARNING: Running on $BRANCH with ALLOW_MAIN_BRANCH=1 (bootstrap only)."
+fi
+
+# Check 2: Require at least one commit
+if [[ "$BRANCH" == "HEAD" ]]; then
+    echo "ERROR: No commits yet. Cannot determine branch."
     exit 1
 fi
 
-# Check 2: Detect uncommitted changes NOT created by this agent
+# Check 3: Detect uncommitted changes
 if git status --porcelain | grep -q "^??"; then
-    echo "WARNING: Uncommitted files detected. Proceed with caution to avoid losing manual work."
+    echo "WARNING: Untracked files detected. Proceed with caution."
 elif git status --porcelain | grep -q "^ M"; then
     echo "WARNING: Unstaged changes detected. Ensure these are intended."
 fi
 
-# Check 3: Verify the worklog SUMMARY.md exists
+# Check 4: Verify the worklog SUMMARY.md exists (using branch slug)
 if [[ ! -f "$WORKLOG_DIR/SUMMARY.md" ]]; then
     echo "ERROR: Worklog SUMMARY.md missing at $WORKLOG_DIR/SUMMARY.md"
-    echo "Hint: Run new-worklog to initialize the tracking structure for this branch."
+    echo "Hint: Run plan skill new_worklog.sh for branch '$BRANCH' (slug: $SLUG)."
     exit 1
 fi
 
-# Check 4: Verify plan file exists
+# Check 5: Verify plan file exists
 PLAN_DIR="$AGENTFLOW_ROOT/plans"
 if [[ -d "$PLAN_DIR" ]]; then
-    if [[ -z "$(ls -A "$PLAN_DIR"/*.md 2>/dev/null || true)" ]]; then
+    if ! compgen -G "$PLAN_DIR/*.md" > /dev/null; then
         echo "WARNING: No plan files found in $PLAN_DIR."
     fi
 else
     echo "WARNING: Plan directory $PLAN_DIR does not exist."
 fi
 
-# Check 5: Print confirmation
 echo "Pre-check passed."
 echo "Current Branch: $BRANCH"
+echo "Worklog Slug: $SLUG"
 echo "Worklog Path: $WORKLOG_DIR"

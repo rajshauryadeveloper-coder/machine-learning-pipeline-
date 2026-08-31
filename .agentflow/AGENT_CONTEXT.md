@@ -85,3 +85,10 @@ This is a web application with a Python backend and a static HTML frontend. The 
 ## Active Worklog
 
 Latest completed task: [Initialize Repository](worklogs/main/SUMMARY.md)
+
+## Workflow
+
+Agent execution follows `.agentflow/AGENTFLOW.md` and `.agentflow/WORKFLOW.md`. Key conventions:
+- Create feature branch before worklog (`feature/foo` → `worklogs/feature-foo/`)
+- Full chain: plan → implement → test → review → merge → postmortem
+- Bootstrap tasks on `main` only with `ALLOW_MAIN_BRANCH=1`

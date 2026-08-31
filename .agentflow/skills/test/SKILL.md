@@ -28,8 +28,13 @@ Verify the implementation meets the requirements and passes all automated checks
 | Input | Description |
 | :--- | :--- |
 | `AGENT_CONTEXT.md` | Contains the test command |
-| `worklogs/<branch>/attempts/` | Latest implement attempt |
+| `worklogs/<branch-slug>/attempts/` | Latest implement attempt |
 | Source Files | The source files changed in the implementation |
+
+## Coverage Gate
+After tests pass, check per-module coverage in the output:
+- Modules **below 60%** should be noted in the worklog for integration test follow-up.
+- External dependencies (database, APIs) should be **mocked in unit tests**; live integration tests belong in `tests/integration/` when schema exists.
 
 ## Hook Scripts
 | Script | Language | Description |
@@ -66,5 +71,5 @@ If tests fail and we re-enter `test` after another `implement` pass:
 - **Failure:** Chain back to `implement` with structured feedback highlighting the failed tests.
 
 ## Outputs
-- Structured test result log in `worklogs/<branch>/artifacts/`.
+- Structured test result log in `worklogs/<branch-slug>/artifacts/`.
 - Updated state in the current attempt file.
