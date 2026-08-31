@@ -57,6 +57,12 @@ updated: 2026-08-31T17:41:00Z
 - **Attempts:** 1
 - **Key Lesson:** Machine Learning & Token Cost Accounting: Deployed 5 production ML pipelines using scikit-learn hybrid ensembles with real-time inference APIs, interactive UI, and live token expenditure tracking (zsh.33 USD across 146k tokens).
 
+### [2026-08-31] feature/agent-integration
+- **Branch/Worklog:** `feature/agent-integration`
+- **Outcome:** Merged
+- **Attempts:** 1
+- **Key Lesson:** CORS & Safety Guardrails: Configured CORSMiddleware and deterministic AST/regex SQL write blockers to ensure 100% read-only data analytics.
+
 <!--
 Agents: Append new entries ABOVE this comment block, keeping the most recent entries at the top. Use the format specified above.
 -->

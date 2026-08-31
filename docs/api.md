@@ -150,3 +150,13 @@ All collection endpoints return responses in standard pagination format:
 | `POST` | `/api/v1/ml/predict/churn` | Predict customer churn probability and retention strategy |
 | `POST` | `/api/v1/ml/predict/recommend` | Generate Top-K personalized product recommendations |
 
+---
+
+## Agentic Analytics Chatbot APIs (`/api/v1/agent`)
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/api/v1/agent/chat` | Natural language analytics query with graph reasoning, read-only SQL, and safety guardrails |
+| `GET` | `/api/v1/agent/status` | Operational status, active model provider, guardrail policies, and registered tools |
+| `GET` | `/api/v1/agent/schema` | Schema catalog and table metadata exposed to the agent |
+

@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     db_name: str = "ecommerce_database"
     db_user: str = "shaurya"
     db_password: str = ""
+    gemini_api_key: str = ""
+    gemini_model: str = "gemma-4-31b-it"
 
     @property
     def database_url(self) -> str:
