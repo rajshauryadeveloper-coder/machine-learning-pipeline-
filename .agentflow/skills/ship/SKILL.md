@@ -1,50 +1,21 @@
 ---
-type: skill
 name: ship
-version: 2.0.0
 status: active
-created: 2026-08-31T18:25:00Z
 chain_to: null
-chain_on_failure: implement
-tags: [ship, merge, git, postmortem, rollup]
+tags: [ship, commit, push, merge, postmortem, secret-shield]
 ---
-
-# Ship Skill (Optimized Merged Release)
+# Ship Skill (v3 High-Speed)
 
 ## Goal
-Atomically commit changes, push to remote, merge feature branch to `main`, write the postmortem learning, append to `ROLLUP.md`, and mark the task completed in a single command (`flow ship`).
+Atomically scan for secrets, commit, push branch, merge to `main`, and log postmortem rollup.
 
-## When to Invoke
-- Immediately after `verify` skill reports all verification gates passing.
+## Command
+```bash
+./scripts/flow ship -m "feat(slug): description" --lesson "Category" --details "Details"
+```
 
-## Hook Commands
-
-| Action | Command | Automated By |
-| --- | --- | --- |
-| **All-In-One Ship** | `./scripts/flow ship --lesson "<Category>" --details "<Details>"` | `flow.py` |
-
-## Steps
-
-1. **Ship the Task**:
-   ```bash
-   ./scripts/flow ship \
-     -m "feat(<slug>): describe feature changes" \
-     --lesson "Key Domain/Technical Lesson" \
-     --details "Actionable insight learned from this iteration."
-   ```
-2. **Review Output**:
-   - Commits all tracked and untracked changes with descriptive message.
-   - Pushes feature branch to `origin`.
-   - Checks out `main`, merges feature branch, and pushes `main`.
-   - Automatically writes `worklogs/<branch-slug>/postmortem.md`.
-   - Automatically appends entry to `.agentflow/postmortems/ROLLUP.md`.
-   - Marks prompt and worklog status `completed`.
-
-## Chain
-- **Terminal**: Workflow successfully completed and closed.
-
-## Outputs
-- Merged commits on `main` and remote `origin/main`.
-- `worklogs/<branch-slug>/postmortem.md`
-- Appended entry in `.agentflow/postmortems/ROLLUP.md`
-- Worklog `SUMMARY.md` marked `completed` and `merged`.
+## Automated Operations
+1. **Secret Scanning**: Scans staged changes and sanitizes `.agentflow/prompts` to prevent GitHub Push Protection blocks.
+2. **Commit & Push**: Commits working tree and pushes feature branch.
+3. **Merge & Sync**: Switches to `main`, merges feature branch, and pushes `main` to origin.
+4. **Postmortem & Rollup**: Generates `worklogs/<slug>/postmortem.md` and appends to `postmortems/ROLLUP.md`.

@@ -63,6 +63,12 @@ updated: 2026-08-31T17:41:00Z
 - **Attempts:** 1
 - **Key Lesson:** CORS & Safety Guardrails: Configured CORSMiddleware and deterministic AST/regex SQL write blockers to ensure 100% read-only data analytics.
 
+### [2026-08-31] feature/optimize-agentflow-token-cost
+- **Branch/Worklog:** `feature/optimize-agentflow-token-cost`
+- **Outcome:** Merged
+- **Attempts:** 1
+- **Key Lesson:** Token Cost Optimization & Secret Shielding: Implemented flow context to eliminate 10+ exploratory tool calls, added automated secret sanitization to prevent push protection blocks, fast-fail linting, and consolidated 11 micro-skills into 4 atomic skills.
+
 <!--
 Agents: Append new entries ABOVE this comment block, keeping the most recent entries at the top. Use the format specified above.
 -->

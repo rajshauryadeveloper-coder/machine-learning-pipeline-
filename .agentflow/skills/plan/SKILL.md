@@ -1,36 +1,21 @@
 ---
-type: skill
 name: plan
-version: 2.0.0
 status: active
-created: 2026-08-31T18:25:00Z
 chain_to: implement
-chain_on_failure: null
-tags: [plan, design, scaffold]
+tags: [plan, start, scaffold, context]
 ---
-
-# Plan Skill (Optimized)
+# Plan Skill (v3 High-Speed)
 
 ## Goal
-Initialize branch-scoped tracking, create a feature branch, generate the implementation plan, and set worklog status in a single step (`flow start`).
-
-## When to Invoke
-- **New Task**: First skill in the workflow for any feature or fix.
+Start a task, create branch, capture single-shot context snapshot, and scaffold plan in 1 step.
 
 ## Commands
-
 ```bash
-./scripts/flow start <slug> \
-  --title "Task Title" \
-  --prompt prompts/my_prompt.md \
-  --plan plans/20260831-my-plan.md
+./scripts/flow start <slug> --title "Task Title" --prompt prompts/<file>.md
+./scripts/flow context   # Capture full DB schema, API routes, and ML state in 1 shot
 ```
 
 ## Steps
-1. Run `./scripts/flow start <slug>` with prompt and plan arguments.
-2. Refine the plan in `plans/<timestamp>-<slug>.md` if custom architecture or steps are needed.
-3. Automatically transitions worklog stage to `implement`.
-
-## Outputs
-- `plans/<timestamp>-<slug>.md`
-- `worklogs/<branch-slug>/SUMMARY.md`
+1. Run `./scripts/flow start <slug>` to create branch and worklog.
+2. Run `./scripts/flow context` to obtain full repository state without multiple file reads.
+3. Present plan with files and dependencies to user. Upon approval, chain to `implement`.

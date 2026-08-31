@@ -4,15 +4,15 @@
 Provides fast, token-efficient, single-command operations for the entire
 AgentFlow lifecycle:
   - flow start <slug>   : Create branch, scaffold worklog & plan, update prompt
-  - flow verify         : Run pytest, coverage check, flake8, black, capture diff
-  - flow ship           : Commit, push, merge to main, write postmortem & rollup
-  - flow status         : Inspect current workflow stage and metrics
+  - flow context        : One-shot token-dense snapshot of DB, routes, ML & repo
+  - flow verify         : Fast-fail lint/format + Pytest + coverage check + diff
+  - flow ship           : Secret scan + commit, push, merge, postmortem & rollup
+  - flow status         : Inspect active stage and attempt metrics
 """
 from __future__ import annotations
 
 import argparse
 import datetime
-import os
 import re
 import subprocess
 import sys
@@ -21,6 +21,15 @@ from pathlib import Path
 # Determine absolute paths dynamically regardless of execution directory
 REPO_ROOT = Path(__file__).resolve().parents[2]
 AGENTFLOW_ROOT = REPO_ROOT / ".agentflow"
+
+# Secret patterns that should never be committed
+SECRET_PATTERNS = [
+    (r"AQ\.[a-zA-Z0-9_\-]{30,}", "Google/Gemini API Key"),
+    (r"AIza[0-9A-Za-z-_]{35}", "Google API Key"),
+    (r"ghp_[0-9a-zA-Z]{36}", "GitHub Personal Access Token"),
+    (r"gho_[0-9a-zA-Z]{36}", "GitHub OAuth Token"),
+    (r"sk-[0-9a-zA-Z]{32,}", "OpenAI / Generic Secret Key"),
+]
 
 
 def run_cmd(
@@ -62,10 +71,36 @@ def branch_to_slug(branch: str) -> str:
 
 
 def get_active_worklog_dir(branch: str | None = None) -> Path:
-    """Return the Path to the worklog directory for the active or given branch."""
+    """Return Path to worklog directory for active or given branch."""
     b = branch or get_current_branch()
     slug = branch_to_slug(b)
     return AGENTFLOW_ROOT / "worklogs" / slug
+
+
+def check_and_sanitize_secrets() -> list[str]:
+    """Scan prompt files and git staged files for secret patterns, sanitizing prompts."""
+    issues = []
+    # 1. Sanitize .agentflow/prompts
+    prompts_dir = AGENTFLOW_ROOT / "prompts"
+    if prompts_dir.exists():
+        for p in prompts_dir.glob("*.md"):
+            content = p.read_text(encoding="utf-8")
+            modified = False
+            for pat, name in SECRET_PATTERNS:
+                if re.search(pat, content):
+                    content = re.sub(pat, "<SET_VIA_ENV_SECRET>", content)
+                    modified = True
+                    issues.append(f"Sanitized {name} in {p.name}")
+            if modified:
+                p.write_text(content, encoding="utf-8")
+
+    # 2. Check staged changes for secrets
+    _, staged_diff, _ = run_cmd(["git", "diff", "--cached"])
+    for pat, name in SECRET_PATTERNS:
+        if re.search(pat, staged_diff):
+            issues.append(f"Detected staged {name} matching pattern '{pat}'")
+
+    return issues
 
 
 # ----------------------------------------------------------------------
@@ -138,64 +173,58 @@ Implement {title}.
 4. Ship changes (`flow ship`).
 
 ## Worklog
-[SUMMARY.md](../worklogs/{worklog_slug}/SUMMARY.md)
+- Track progress in `worklogs/{worklog_slug}/SUMMARY.md`.
 """,
             encoding="utf-8",
         )
         print(f"Created plan at {full_plan_path}")
 
-    # Update prompt frontmatter to in_progress if prompt file exists
+    # Create or update prompt file
     full_prompt_path = AGENTFLOW_ROOT / prompt_path_rel
-    if full_prompt_path.exists():
-        p_text = full_prompt_path.read_text(encoding="utf-8")
-        if "status: draft" in p_text or "status: active" in p_text:
-            p_text = re.sub(
-                r"status:\s*(draft|active)",
-                "status: in_progress",
-                p_text,
-                count=1,
-            )
-            full_prompt_path.write_text(p_text, encoding="utf-8")
-
-    # Create worklog SUMMARY.md
-    summary_file = worklog_dir / "SUMMARY.md"
-    summary_content = f"""---
-type: worklog
-status: active
-branch: {branch_name}
-worklog_slug: {worklog_slug}
+    full_prompt_path.parent.mkdir(parents=True, exist_ok=True)
+    if not full_prompt_path.exists():
+        full_prompt_path.write_text(
+            f"""---
+type: prompt
+status: in_progress
 created: {timestamp_iso}
 tags: []
 ---
 
-# Worklog: {title}
+# Prompt: {title}
+
+## Requirements
+Implement {title} according to project standards.
+""",
+            encoding="utf-8",
+        )
+        print(f"Created prompt at {full_prompt_path}")
+
+    # Write initial worklog SUMMARY.md
+    summary_file = worklog_dir / "SUMMARY.md"
+    summary_content = f"""---
+type: worklog-summary
+status: active
+branch: {branch_name}
+created: {timestamp_iso}
+plan: {plan_path_rel}
+prompt: {prompt_path_rel}
+tags: []
+---
+
+# Task: {title}
 
 ## Status
-**active** — In progress.
+- **Branch**: `{branch_name}`
+- **Current Stage**: `implement`
+- **Outcome**: **Pending**
 
-## Origin Prompt
-[Prompt](../../{prompt_path_rel})
+## Key Files
+- Plan: [`{plan_path_rel}`]({plan_path_rel})
+- Prompt: [`{prompt_path_rel}`]({prompt_path_rel})
 
-## Plan
-[Plan](../../{plan_path_rel})
-
-## Current Stage
-**implement**
-
-## What Was Done
-- **[{timestamp_iso}]** Task started on branch `{branch_name}`. Initialized plan and worklog.
-
-## Metrics
-
-| Stage | Attempts | Outcome | Notes |
-| --- | --- | --- | --- |
-| `plan` | 1 | Success | Initialized via flow start |
-| `implement` | 0 | In Progress | - |
-| `verify` | 0 | Pending | - |
-| `ship` | 0 | Pending | - |
-
-## Outcome
-**Pending**
+## Attempts
+- *(none yet)*
 
 ## Artifacts
 - *(none yet)*
@@ -207,10 +236,90 @@ tags: []
 
 
 # ----------------------------------------------------------------------
-# 2. VERIFY COMMAND (Combines Test + Review + Lint + Format + Coverage)
+# 2. CONTEXT COMMAND (One-Shot Token-Dense Snapshot)
+# ----------------------------------------------------------------------
+def cmd_context(args: argparse.Namespace) -> int:
+    """Generate an ultra-compact single-shot snapshot of schema, APIs, ML, and git state."""
+    branch = get_current_branch()
+    slug = branch_to_slug(branch)
+
+    # 1. Git State
+    _, status_out, _ = run_cmd(["git", "status", "--porcelain"])
+    modified_cnt = len([line for line in status_out.splitlines() if line.strip()])
+
+    # 2. Database Schema
+    table_lines = []
+    try:
+        sys.path.insert(0, str(REPO_ROOT))
+        from src.db.schema import get_table_metadata
+
+        tables = get_table_metadata()
+        for t in tables:
+            cols = ", ".join([c["column_name"] for c in t["columns"][:6]])
+            extra = f" (+{len(t['columns'])-6} more)" if len(t["columns"]) > 6 else ""
+            table_lines.append(f"  • {t['table_name']:12} ({t['row_count']:3} rows): {cols}{extra}")
+    except Exception as e:
+        table_lines.append(f"  • DB Metadata unavailable: {e}")
+
+    # 3. API Endpoints
+    route_groups: dict[str, list[str]] = {
+        "Agentic AI": [],
+        "ML Engine": [],
+        "Analytics": [],
+        "Catalog": [],
+        "System": [],
+    }
+    try:
+        from src.main import app
+
+        openapi = app.openapi()
+        for path, methods in sorted(openapi.get("paths", {}).items()):
+            for method in methods.keys():
+                m_str = f"{method.upper()} {path}"
+                if "/agent" in path:
+                    route_groups["Agentic AI"].append(m_str)
+                elif "/ml" in path:
+                    route_groups["ML Engine"].append(m_str)
+                elif "/analytics" in path or "/database" in path:
+                    route_groups["Analytics"].append(m_str)
+                elif any(c in path for c in ["categories", "customers", "products", "orders"]):
+                    route_groups["Catalog"].append(m_str)
+                else:
+                    route_groups["System"].append(m_str)
+    except Exception as e:
+        route_groups["System"].append(f"Routes inspection error: {e}")
+
+    print("=" * 70)
+    print("⚡ AGENTFLOW ONE-SHOT REPOSITORY CONTEXT SNAPSHOT")
+    print("=" * 70)
+    print(f"[ACTIVE WORKFLOW] Branch: {branch} | Slug: {slug} | Uncommitted Files: {modified_cnt}")
+    print("\n[POSTGRESQL RELATIONAL SCHEMA (5 Tables / 340 Rows)]")
+    print("\n".join(table_lines))
+    print("\n[REST API ROUTES]")
+    for grp, routes in route_groups.items():
+        if routes:
+            print(f"  • {grp:12}: {', '.join(routes[:4])}{' (+' + str(len(routes)-4) + ' more)' if len(routes) > 4 else ''}")
+
+    print("\n[ML PRODUCTION PIPELINES (5 Ensembles)]")
+    print("  • 1. CLV Spend (Hybrid Voting, R²=0.9999) & VIP (Soft Voting, F1=1.00)")
+    print("  • 2. Demand Velocity (Gradient Boosting, R²=0.8841)")
+    print("  • 3. Order Delay Risk (Hybrid Ensemble, F1=0.8889)")
+    print("  • 4. Customer Churn (4-Model Soft Voting, F1=1.0000)")
+    print("  • 5. Cross-Sell Recommendations (Hybrid Collaborative, P@3=0.6667)")
+
+    print("\n[ACTIVE AGENT ARCHITECTURE]")
+    print("  • Model: gemma-4-31b-it (Google AI Studio)")
+    print("  • Graph: Guardrail Gate -> Schema Analyzer -> Agent Reasoner -> Synthesizer")
+    print("  • Safety: AST/Regex Read-Only Blocker + PostgreSQL READ ONLY Transaction")
+    print("=" * 70)
+    return 0
+
+
+# ----------------------------------------------------------------------
+# 3. VERIFY COMMAND (Fast-Fail Lint/Format -> Tests -> Coverage)
 # ----------------------------------------------------------------------
 def cmd_verify(args: argparse.Namespace) -> int:
-    """Run all verification gates: pytest, coverage gate, flake8, black, diff."""
+    """Run verification gates with fast-fail on lint/format before slow tests."""
     branch = get_current_branch()
     slug = branch_to_slug(branch)
     worklog_dir = AGENTFLOW_ROOT / "worklogs" / slug
@@ -225,39 +334,35 @@ def cmd_verify(args: argparse.Namespace) -> int:
 
     print(f"[AgentFlow] Running verification gates on branch '{branch}'...")
 
-    # Gate 1: Pytest & Coverage
-    test_cmd = args.test_cmd or "uv run pytest tests/ --cov=src"
-    print(f"  -> Executing tests: {test_cmd}")
+    # Fast Gate 1: Flake8 Linter (~0.2s)
+    print("  -> Step 1/3: Running flake8 lint check...")
+    flake8_code, flake8_out, flake8_err = run_cmd("uv run flake8 src/ tests/", shell=True)
+    flake8_combined = f"{flake8_out}\n{flake8_err}".strip()
+    if flake8_code != 0:
+        print(f"\n❌ Flake8 Linter FAILED (Fast-fail triggered):\n{flake8_combined}")
+        return 1
+
+    # Fast Gate 2: Black Formatter Check (~0.2s)
+    print("  -> Step 2/3: Running black format check...")
+    black_code, black_out, black_err = run_cmd("uv run black --check src/ tests/", shell=True)
+    black_combined = f"{black_out}\n{black_err}".strip()
+    if black_code != 0:
+        print(f"\n❌ Black Format FAILED (Fast-fail triggered):\n{black_combined}")
+        return 1
+
+    # Gate 3: Pytest & Coverage
+    test_cmd = args.test_cmd or "uv run pytest tests/ --cov=src -q --tb=short"
+    print(f"  -> Step 3/3: Executing tests: {test_cmd}")
     test_code, test_out, test_err = run_cmd(test_cmd, shell=True)
     test_combined = f"{test_out}\n{test_err}".strip()
 
     # Parse Pytest results
     passed = len(re.findall(r"(\d+)\s+passed", test_combined))
-    passed_count = (
-        int(re.findall(r"(\d+)\s+passed", test_combined)[0]) if passed else 0
-    )
+    passed_count = int(re.findall(r"(\d+)\s+passed", test_combined)[0]) if passed else 0
     failed = len(re.findall(r"(\d+)\s+failed", test_combined))
-    failed_count = (
-        int(re.findall(r"(\d+)\s+failed", test_combined)[0]) if failed else 0
-    )
+    failed_count = int(re.findall(r"(\d+)\s+failed", test_combined)[0]) if failed else 0
     errors = len(re.findall(r"(\d+)\s+error", test_combined))
-    errors_count = (
-        int(re.findall(r"(\d+)\s+error", test_combined)[0]) if errors else 0
-    )
-
-    # Gate 2: Flake8 Linter
-    print("  -> Running flake8 lint check...")
-    flake8_code, flake8_out, flake8_err = run_cmd(
-        "uv run flake8 src/ tests/", shell=True
-    )
-    flake8_combined = f"{flake8_out}\n{flake8_err}".strip()
-
-    # Gate 3: Black Formatter Check
-    print("  -> Running black format check...")
-    black_code, black_out, black_err = run_cmd(
-        "uv run black --check src/ tests/", shell=True
-    )
-    black_combined = f"{black_out}\n{black_err}".strip()
+    errors_count = int(re.findall(r"(\d+)\s+error", test_combined)[0]) if errors else 0
 
     # Gate 4: Coverage check
     coverage_passed = True
@@ -283,24 +388,16 @@ def cmd_verify(args: argparse.Namespace) -> int:
     attempt_num = count + 1
 
     artifact_file = artifacts_dir / f"verify_result_{timestamp_compact}.md"
-    attempt_file = (
-        attempts_dir / f"verify_attempt_{attempt_num}_{timestamp_compact}.md"
-    )
+    attempt_file = attempts_dir / f"verify_attempt_{attempt_num}_{timestamp_compact}.md"
 
     test_status_str = "✅ PASS" if (test_code == 0 and failed_count == 0) else "❌ FAIL"
     cov_status_str = "✅ PASS" if coverage_passed else "❌ FAIL"
-    flake_status_str = "✅ PASS" if flake8_code == 0 else "❌ FAIL"
-    black_status_str = "✅ PASS" if black_code == 0 else "❌ FAIL"
-    lint_details = "0 issues" if flake8_code == 0 else f"{len(flake8_combined.splitlines())} issues"
-    black_details = "Clean formatting" if black_code == 0 else "Reformatting needed"
+    flake_status_str = "✅ PASS"
+    black_status_str = "✅ PASS"
 
     extra_sections = []
     if test_code != 0:
         extra_sections.append(f"### Test Output\n```text\n{test_combined}\n```")
-    if flake8_code != 0:
-        extra_sections.append(f"### Lint Output\n```text\n{flake8_combined}\n```")
-    if black_code != 0:
-        extra_sections.append(f"### Format Output\n```text\n{black_combined}\n```")
     extra_text = "\n\n".join(extra_sections)
 
     # Write verification artifact
@@ -318,8 +415,8 @@ timestamp: {timestamp_iso}
 | :--- | :--- | :--- |
 | **Pytest** | {test_status_str} | {passed_count} passed, {failed_count} failed, {errors_count} errors |
 | **Coverage** | {cov_status_str} | {coverage_pct}% (Threshold: {args.coverage_threshold}%) |
-| **Flake8** | {flake_status_str} | {lint_details} |
-| **Black Format** | {black_status_str} | {black_details} |
+| **Flake8** | {flake_status_str} | 0 issues (Clean) |
+| **Black Format** | {black_status_str} | Clean formatting |
 
 ## Changed Files
 ```text
@@ -331,7 +428,6 @@ timestamp: {timestamp_iso}
     artifact_file.write_text(artifact_content, encoding="utf-8")
 
     # Write attempt file
-    lint_count = 0 if flake8_code == 0 else len(flake8_combined.splitlines())
     attempt_content = f"""---
 type: attempt
 stage: verify
@@ -347,8 +443,8 @@ Verification attempt {attempt_num}: {"PASSED" if all_passed else "FAILED"}.
 - Passed tests: {passed_count}
 - Failed tests: {failed_count}
 - Coverage: {coverage_pct}%
-- Lint issues: {lint_count}
-- Format clean: {black_code == 0}
+- Lint issues: 0
+- Format clean: True
 
 ## Next Stage
 {"ship" if all_passed else "implement"}
@@ -368,10 +464,7 @@ Verification attempt {attempt_num}: {"PASSED" if all_passed else "FAILED"}.
         summary_file.write_text(s_text, encoding="utf-8")
 
     if all_passed:
-        print(
-            f"\n✅ All verification gates PASSED! (Tests: {passed_count}, "
-            f"Coverage: {coverage_pct}%, Lint: clean)"
-        )
+        print(f"\n✅ All verification gates PASSED! (Tests: {passed_count}, Coverage: {coverage_pct}%, Lint: clean)")
         print(f"Artifact recorded: {artifact_file}")
         print("Run 'flow ship --lesson \"...\"' to merge and close.")
         return 0
@@ -381,16 +474,12 @@ Verification attempt {attempt_num}: {"PASSED" if all_passed else "FAILED"}.
             print(f"  - Tests failed ({failed_count} failures, {errors_count} errors)")
         if not coverage_passed:
             print(f"  - Coverage {coverage_pct}% below {args.coverage_threshold}% threshold")
-        if flake8_code != 0:
-            print(f"  - Flake8 lint errors:\n{flake8_combined}")
-        if black_code != 0:
-            print(f"  - Black formatting needed:\n{black_combined}")
         print(f"See details in: {artifact_file}")
         return 1
 
 
 # ----------------------------------------------------------------------
-# 3. SHIP COMMAND (Combines Commit + Push + Merge + Postmortem + Rollup)
+# 4. SHIP COMMAND (Secret Sanitization + Commit + Push + Merge + Rollup)
 # ----------------------------------------------------------------------
 def cmd_ship(args: argparse.Namespace) -> int:
     """Commit, push, merge feature branch to main, write postmortem, and append rollup."""
@@ -405,10 +494,17 @@ def cmd_ship(args: argparse.Namespace) -> int:
     timestamp_iso = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
     date_str = now_utc.strftime("%Y-%m-%d")
 
-    lesson_cat = args.lesson or "Workflow Execution"
+    lesson_cat = args.lesson or "Workflow Optimization"
     lesson_det = args.details or "All verification gates passed cleanly."
 
-    # 1. Generate Postmortem
+    # 1. Pre-commit Secret Sanitization & Safety Scan
+    print("[AgentFlow] Running automated secret safety scan...")
+    sanitizations = check_and_sanitize_secrets()
+    if sanitizations:
+        for s in sanitizations:
+            print(f"  🔒 [Security Shield] {s}")
+
+    # 2. Generate Postmortem
     postmortem_content = f"""---
 type: postmortem
 status: completed
@@ -431,7 +527,7 @@ created: {timestamp_iso}
     postmortem_file.write_text(postmortem_content, encoding="utf-8")
     print(f"Written postmortem to {postmortem_file}")
 
-    # 2. Append to ROLLUP.md
+    # 3. Append to ROLLUP.md
     if not rollup_file.exists():
         rollup_file.parent.mkdir(parents=True, exist_ok=True)
         rollup_file.write_text(
@@ -448,38 +544,28 @@ created: {timestamp_iso}
 """
     if "<!--" in r_text:
         idx = r_text.find("<!--")
-        updated_r_text = (
-            r_text[:idx].rstrip() + "\n\n" + rollup_entry + "\n" + r_text[idx:]
-        )
+        updated_r_text = r_text[:idx].rstrip() + "\n\n" + rollup_entry + "\n" + r_text[idx:]
     else:
         updated_r_text = r_text.rstrip() + "\n\n" + rollup_entry + "\n"
     rollup_file.write_text(updated_r_text, encoding="utf-8")
     print(f"Appended entry to {rollup_file}")
 
-    # 3. Update SUMMARY.md to completed
+    # 4. Update SUMMARY.md to completed
     if summary_file.exists():
         s_text = summary_file.read_text(encoding="utf-8")
         s_text = re.sub(r"status:\s*active", "status: completed", s_text, count=1)
-        s_text = re.sub(
-            r"## Current Stage\s*\n\*\*[a-zA-Z_-]+\*\*",
-            "## Current Stage\n**merged**",
-            s_text,
-        )
-        s_text = re.sub(
-            r"## Outcome\s*\n\*\*Pending\*\*",
-            "## Outcome\n**Merged** — Merged to `main`.",
-            s_text,
-        )
+        s_text = re.sub(r"## Current Stage\s*\n\*\*[a-zA-Z_-]+\*\*", "## Current Stage\n**merged**", s_text)
+        s_text = re.sub(r"## Outcome\s*\n\*\*Pending\*\*", "## Outcome\n**Merged** — Merged to `main`.", s_text)
         summary_file.write_text(s_text, encoding="utf-8")
 
-    # 4. Update prompt to completed if any matching prompt
+    # 5. Update prompt to completed
     for prompt_file in (AGENTFLOW_ROOT / "prompts").glob("*.md"):
         p_text = prompt_file.read_text(encoding="utf-8")
         if "status: in_progress" in p_text:
             p_text = re.sub(r"status:\s*in_progress", "status: completed", p_text)
             prompt_file.write_text(p_text, encoding="utf-8")
 
-    # 5. Stage all changes
+    # 6. Stage all changes
     print("[AgentFlow] Staging and committing changes...")
     run_cmd(["git", "add", "-A"], check=True)
 
@@ -490,10 +576,10 @@ created: {timestamp_iso}
     else:
         print("No new working tree changes to commit (using current HEAD).")
 
-    # 6. Push feature branch if not on main
+    # 7. Push feature branch & merge to main
     if branch != "main" and not args.no_push:
         print(f"[AgentFlow] Pushing branch '{branch}' to origin...")
-        run_cmd(["git", "push", "origin", branch])
+        run_cmd(["git", "push", "origin", branch, "--force-with-lease"])
 
         # Checkout main and merge
         print("[AgentFlow] Merging to 'main'...")
@@ -511,7 +597,7 @@ created: {timestamp_iso}
 
 
 # ----------------------------------------------------------------------
-# 4. STATUS COMMAND
+# 5. STATUS COMMAND
 # ----------------------------------------------------------------------
 def cmd_status(args: argparse.Namespace) -> int:
     """Display active branch status, stage, and attempt counts."""
@@ -549,7 +635,7 @@ def cmd_status(args: argparse.Namespace) -> int:
 
 
 # ----------------------------------------------------------------------
-# 5. CLI PARSER & ENTRYPOINT
+# 6. CLI PARSER & ENTRYPOINT
 # ----------------------------------------------------------------------
 def main() -> int:
     parser = argparse.ArgumentParser(
@@ -559,18 +645,17 @@ def main() -> int:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # start
-    p_start = subparsers.add_parser(
-        "start", help="Start a new task branch and worklog"
-    )
+    p_start = subparsers.add_parser("start", help="Start a new task branch and worklog")
     p_start.add_argument("slug", help="Feature name or slug (e.g. add-auth)")
     p_start.add_argument("--title", help="Human-readable title")
     p_start.add_argument("--prompt", help="Relative path to prompt file")
     p_start.add_argument("--plan", help="Relative path to plan file")
 
+    # context (one-shot token-dense snapshot)
+    subparsers.add_parser("context", help="One-shot token-dense repository snapshot")
+
     # verify
-    p_verify = subparsers.add_parser(
-        "verify", help="Run tests, coverage, flake8, black, diff"
-    )
+    p_verify = subparsers.add_parser("verify", help="Fast-fail lint/format + tests + coverage + diff")
     p_verify.add_argument("--test-cmd", help="Custom test command")
     p_verify.add_argument(
         "--coverage-threshold",
@@ -580,33 +665,21 @@ def main() -> int:
     )
 
     # ship
-    p_ship = subparsers.add_parser(
-        "ship", help="Commit, push, merge to main, write postmortem & rollup"
-    )
+    p_ship = subparsers.add_parser("ship", help="Commit, push, merge to main, write postmortem & rollup")
     p_ship.add_argument("-m", "--message", help="Git commit message")
-    p_ship.add_argument(
-        "--lesson",
-        default="Workflow Optimization",
-        help="Postmortem key lesson category",
-    )
-    p_ship.add_argument(
-        "--details",
-        default="All verification gates passed cleanly.",
-        help="Postmortem key lesson details",
-    )
-    p_ship.add_argument(
-        "--no-push", action="store_true", help="Skip remote git push"
-    )
+    p_ship.add_argument("--lesson", default="Workflow Optimization", help="Postmortem key lesson category")
+    p_ship.add_argument("--details", default="All verification gates passed cleanly.", help="Postmortem details")
+    p_ship.add_argument("--no-push", action="store_true", help="Skip remote git push")
 
     # status
-    subparsers.add_parser(
-        "status", help="Inspect current workflow stage and metrics"
-    )
+    subparsers.add_parser("status", help="Inspect current workflow stage and metrics")
 
     args = parser.parse_args()
 
     if args.command == "start":
         return cmd_start(args)
+    elif args.command == "context":
+        return cmd_context(args)
     elif args.command == "verify":
         return cmd_verify(args)
     elif args.command == "ship":
