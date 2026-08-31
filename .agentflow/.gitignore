@@ -1,0 +1,7 @@
+# Cloned external sources (re-created by sync-sources)
+.sources/
+
+# Large worklog artifacts
+worklogs/*/artifacts/*.diff
+worklogs/*/artifacts/*.log
+worklogs/*/artifacts/*.patch

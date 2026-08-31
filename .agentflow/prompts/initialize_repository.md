@@ -1,0 +1,1 @@
+Initialize a workspace using the provided details and requirements.

@@ -1,0 +1,26 @@
+# External documentation sources.
+#
+# `python scaffold_agentflow.py sync-sources` clones each repo with
+# git sparse-checkout (shallow, filtered) into .agentflow/.sources/<name>/
+# and copies the listed paths into target_dir under .agentflow/.
+#
+# Edit this file to add your own repos, then run sync-sources.
+
+sources:
+  # ── example entry (replace with real repos) ──
+  #
+  # - name: backend-api
+  #   repo: git@github.com:org/backend-api.git
+  #   ref: main
+  #   sparse_paths:
+  #     - docs/
+  #     - README.md
+  #   target_dir: docs-generated/backend-api
+
+  # - name: shared-protos
+  #   repo: git@github.com:org/shared-protos.git
+  #   ref: v2.4.0
+  #   sparse_paths:
+  #     - proto/
+  #     - CHANGELOG.md
+  #   target_dir: docs-generated/shared-protos
