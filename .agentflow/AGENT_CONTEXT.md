@@ -2,10 +2,10 @@
 type: context
 status: active
 created: 2026-08-31T16:23:00Z
-updated: 2026-09-01T00:58:00Z
+updated: 2026-09-01T01:03:00Z
 ---
 
-# Agent Context (v3 Token-Optimized)
+# Agent Context (v3 Subagent & Token-Optimized)
 
 ## Quick Project Snapshot
 
@@ -13,6 +13,7 @@ updated: 2026-09-01T00:58:00Z
 - **Database**: 5 Relational Tables (`categories`, `customers`, `products`, `orders`, `order_items`), 340 total rows
 - **ML Pipelines**: 5 scikit-learn hybrid ensembles (CLV spend/VIP, Demand velocity, Order delay risk, Churn, Top-K cross-sell)
 - **Agentic AI**: LangGraph 4-stage reasoning graph + Google AI Studio (`gemma-4-31b-it`) with strict read-only AST/token guardrails
+- **Subagents**: Supported via `invoke_subagent` with tiered models (`pro`, `flash`, `flash_lite`)
 
 ## Fast Workflow Commands (`flow` CLI)
 
@@ -28,9 +29,10 @@ updated: 2026-09-01T00:58:00Z
 - **Run Tests**: `uv run pytest tests/ --cov=src`
 - **Lint & Format**: `uv run flake8 src/ tests/ && uv run black --check src/ tests/`
 
-## Agent Rules for Zero-Waste Token Efficiency
+## Agent Rules for Subagent & Token Efficiency
 
 1. **Use `flow context` first**: Avoid multi-turn file exploratory walks. Run `./scripts/flow context` to obtain full DB and API metadata in 1 shot.
-2. **Never hardcode secrets**: Do not write raw API keys or passwords in `.md` or `.py` files.
-3. **Atomic Operations**: Run `./scripts/flow verify` and `./scripts/flow ship` for single-command transitions.
-4. **Scope Control**: Modify only files relevant to the active prompt.
+2. **Enforce 20-30% Context Smart Zone**: Never exceed 300k tokens in the supervisor context. Delegate noisy exploration, large doc reading, and parallel tasks to subagents.
+3. **Select Optimal Model Tier**: Use `flash_lite` for keyword/regex checks, `flash` for research/tests, and `pro` only for complex architecture/math.
+4. **Never hardcode secrets**: Do not write raw API keys or passwords in `.md` or `.py` files.
+5. **Atomic Operations**: Run `./scripts/flow verify` and `./scripts/flow ship` for single-command transitions.

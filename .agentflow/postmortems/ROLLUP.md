@@ -69,6 +69,12 @@ updated: 2026-08-31T17:41:00Z
 - **Attempts:** 1
 - **Key Lesson:** Token Cost Optimization & Secret Shielding: Implemented flow context to eliminate 10+ exploratory tool calls, added automated secret sanitization to prevent push protection blocks, fast-fail linting, and consolidated 11 micro-skills into 4 atomic skills.
 
+### [2026-08-31] feature/subagent-workflow-integration
+- **Branch/Worklog:** `feature/subagent-workflow-integration`
+- **Outcome:** Merged
+- **Attempts:** 1
+- **Key Lesson:** Subagent Delegation & Context Smart Zone: Integrated subagent routing subsystem, model tiering (pro/flash/flash_lite), 20-30% smart zone enforcement, and global orchestration skill.
+
 <!--
 Agents: Append new entries ABOVE this comment block, keeping the most recent entries at the top. Use the format specified above.
 -->
