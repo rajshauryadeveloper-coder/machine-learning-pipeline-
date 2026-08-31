@@ -21,7 +21,7 @@ tags: [initialize]
 [Initialize Repository Plan](../plans/20260831-initialize-repository.md)
 
 ## Current Stage
-**merged**
+**ship**
 
 ## What Was Done
 
