@@ -16,6 +16,13 @@ This `.agentflow/` directory contains the workflow rules and context for your AI
    Open your AI agent (like Antigravity, Cline, OpenHands, or Aider) and give it this initial prompt:
    > "Please read `.agentflow/AGENTFLOW.md` to understand your workflow, and then execute the task described in `.agentflow/prompts/my-feature.md`."
 
+## Current Status
+
+- **Project**: Initialized (FastAPI + static HTML)
+- **Branch**: `main`
+- **Latest worklog**: [worklogs/main/SUMMARY.md](worklogs/main/SUMMARY.md)
+- **Latest plan**: [plans/20260831-initialize-repository.md](plans/20260831-initialize-repository.md)
+
 ## How it works
 
 The agent will read `AGENTFLOW.md` which acts as its instruction manual. It will then automatically route itself through the `skills/` (planning, implementing, testing) and document its progress inside the `worklogs/` folder.

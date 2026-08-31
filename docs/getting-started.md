@@ -13,7 +13,7 @@ uv sync
 cp .env.example .env
 ```
 
-Edit `.env` with your local database credentials. Do not commit `.env` to version control.
+The default `.env.example` uses local PostgreSQL with user `shaurya` and no password. Edit `.env` only if your local setup differs. Do not commit `.env` to version control.
 
 ## Run the Application
 
@@ -54,9 +54,31 @@ The application expects a local PostgreSQL instance:
 | Port | `5432` |
 | Database | `ecommerce_database` |
 | User | `shaurya` |
+| Password | (none — local trust auth) |
 
 Create the database if it does not exist:
 
 ```bash
-createdb ecommerce_database
+createdb -h 127.0.0.1 -U shaurya ecommerce_database
 ```
+
+Verify connectivity:
+
+```bash
+psql -h 127.0.0.1 -U shaurya -d ecommerce_database -c "SELECT 1"
+```
+
+When the database is reachable, the `/health` endpoint returns `"database": true`.
+
+## Docker
+
+Build and run the container:
+
+```bash
+docker build -t machine-learning-pipeline .
+docker run -p 8000:8000 --env-file .env machine-learning-pipeline
+```
+
+## Further Reading
+
+- [API Reference](api.md)

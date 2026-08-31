@@ -32,12 +32,14 @@ Visit http://127.0.0.1:8000/ for the frontend and http://127.0.0.1:8000/health f
 | Test | `uv run pytest tests/ --cov=src` |
 | Lint | `uv run flake8 src/ tests/ && uv run black --check src/ tests/` |
 
-See [docs/getting-started.md](docs/getting-started.md) for full setup instructions.
+## Documentation
 
-## Git Remote
+- [Getting Started](docs/getting-started.md)
+- [API Reference](docs/api.md)
+- [Architecture](docs/architecture.md)
+- [AgentFlow Worklog](.agentflow/worklogs/main/SUMMARY.md)
 
-```bash
-git remote add origin https://github.com/rajshauryadeveloper-coder/machine-learning-pipeline-.git
-git branch -M main
-git push -u origin main
-```
+## Repository
+
+- **Remote**: https://github.com/rajshauryadeveloper-coder/machine-learning-pipeline-
+- **Branch**: `main`
