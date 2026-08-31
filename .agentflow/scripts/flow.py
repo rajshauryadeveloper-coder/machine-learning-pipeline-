@@ -401,36 +401,6 @@ def cmd_ship(args: argparse.Namespace) -> int:
     postmortem_file = worklog_dir / "postmortem.md"
     rollup_file = AGENTFLOW_ROOT / "postmortems" / "ROLLUP.md"
 
-    if branch == "main" and not os.environ.get("ALLOW_MAIN_BRANCH"):
-        print("Note: On main branch already. Processing repository update...")
-
-    # Stage all changes
-    print("[AgentFlow] Staging and committing changes...")
-    run_cmd(["git", "add", "-A"], check=True)
-
-    commit_msg = args.message or f"feat({slug}): implement and verify feature"
-    code, stdout, _ = run_cmd(["git", "commit", "-m", commit_msg])
-    if code == 0:
-        print(f"Committed changes: {commit_msg}")
-    else:
-        print("No new working tree changes to commit (using current HEAD).")
-
-    # Get latest commit SHA
-    _, commit_sha, _ = run_cmd(["git", "rev-parse", "--short", "HEAD"])
-
-    # Push feature branch if not on main
-    if branch != "main" and not args.no_push:
-        print(f"[AgentFlow] Pushing branch '{branch}' to origin...")
-        run_cmd(["git", "push", "origin", branch])
-
-        # Checkout main and merge
-        print("[AgentFlow] Merging to 'main'...")
-        run_cmd(["git", "checkout", "main"], check=True)
-        run_cmd(["git", "merge", branch], check=True)
-        print("[AgentFlow] Pushing 'main' to origin...")
-        run_cmd(["git", "push", "origin", "main"])
-
-    # Generate Postmortem
     now_utc = datetime.datetime.now(datetime.timezone.utc)
     timestamp_iso = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
     date_str = now_utc.strftime("%Y-%m-%d")
@@ -438,6 +408,7 @@ def cmd_ship(args: argparse.Namespace) -> int:
     lesson_cat = args.lesson or "Workflow Execution"
     lesson_det = args.details or "All verification gates passed cleanly."
 
+    # 1. Generate Postmortem
     postmortem_content = f"""---
 type: postmortem
 status: completed
@@ -448,7 +419,7 @@ created: {timestamp_iso}
 # Postmortem: {slug}
 
 ## Outcome
-**Merged** — Commit `{commit_sha}` merged to `main`.
+**Merged** — Branch `{branch}` merged to `main`.
 
 ## What Went Well
 - Automated verification completed with full test and lint checks passing.
@@ -460,7 +431,7 @@ created: {timestamp_iso}
     postmortem_file.write_text(postmortem_content, encoding="utf-8")
     print(f"Written postmortem to {postmortem_file}")
 
-    # Append to ROLLUP.md
+    # 2. Append to ROLLUP.md
     if not rollup_file.exists():
         rollup_file.parent.mkdir(parents=True, exist_ok=True)
         rollup_file.write_text(
@@ -485,7 +456,7 @@ created: {timestamp_iso}
     rollup_file.write_text(updated_r_text, encoding="utf-8")
     print(f"Appended entry to {rollup_file}")
 
-    # Update SUMMARY.md to completed
+    # 3. Update SUMMARY.md to completed
     if summary_file.exists():
         s_text = summary_file.read_text(encoding="utf-8")
         s_text = re.sub(r"status:\s*active", "status: completed", s_text, count=1)
@@ -496,18 +467,45 @@ created: {timestamp_iso}
         )
         s_text = re.sub(
             r"## Outcome\s*\n\*\*Pending\*\*",
-            f"## Outcome\n**Merged** — Commit `{commit_sha}` merged to `main`.",
+            "## Outcome\n**Merged** — Merged to `main`.",
             s_text,
         )
         summary_file.write_text(s_text, encoding="utf-8")
 
-    # Update prompt to completed if any matching prompt
+    # 4. Update prompt to completed if any matching prompt
     for prompt_file in (AGENTFLOW_ROOT / "prompts").glob("*.md"):
         p_text = prompt_file.read_text(encoding="utf-8")
         if "status: in_progress" in p_text:
             p_text = re.sub(r"status:\s*in_progress", "status: completed", p_text)
             prompt_file.write_text(p_text, encoding="utf-8")
 
+    # 5. Stage all changes
+    print("[AgentFlow] Staging and committing changes...")
+    run_cmd(["git", "add", "-A"], check=True)
+
+    commit_msg = args.message or f"feat({slug}): implement and verify feature"
+    code, stdout, _ = run_cmd(["git", "commit", "-m", commit_msg])
+    if code == 0:
+        print(f"Committed changes: {commit_msg}")
+    else:
+        print("No new working tree changes to commit (using current HEAD).")
+
+    # 6. Push feature branch if not on main
+    if branch != "main" and not args.no_push:
+        print(f"[AgentFlow] Pushing branch '{branch}' to origin...")
+        run_cmd(["git", "push", "origin", branch])
+
+        # Checkout main and merge
+        print("[AgentFlow] Merging to 'main'...")
+        run_cmd(["git", "checkout", "main"], check=True)
+        run_cmd(["git", "merge", branch], check=True)
+        print("[AgentFlow] Pushing 'main' to origin...")
+        run_cmd(["git", "push", "origin", "main"])
+    elif branch == "main" and not args.no_push:
+        print("[AgentFlow] Pushing 'main' to origin...")
+        run_cmd(["git", "push", "origin", "main"])
+
+    _, commit_sha, _ = run_cmd(["git", "rev-parse", "--short", "HEAD"])
     print(f"\n🎉 Successfully shipped task '{slug}' to main ({commit_sha})!")
     return 0
 
