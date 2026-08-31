@@ -35,9 +35,10 @@ Visit http://127.0.0.1:8000/ for the frontend and http://127.0.0.1:8000/health f
 ## Documentation
 
 - [Getting Started](docs/getting-started.md)
+- [Machine Learning Pipeline](docs/ml-pipeline.md)
 - [API Reference](docs/api.md)
 - [Architecture](docs/architecture.md)
-- [AgentFlow Worklog](.agentflow/worklogs/main/SUMMARY.md)
+- [AgentFlow Worklog](.agentflow/worklogs/feature-machine-learning-analytics/SUMMARY.md)
 
 ## Repository
 

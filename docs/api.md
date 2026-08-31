@@ -133,3 +133,20 @@ All collection endpoints return responses in standard pagination format:
   "total_pages": 10
 }
 ```
+
+---
+
+## Machine Learning & Predictive Analytics APIs (`/api/v1/ml`)
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/v1/ml/cases` | List all 5 business cases, target variables, and metrics |
+| `GET` | `/api/v1/ml/experiments` | Run and retrieve complete benchmark comparison results |
+| `GET` | `/api/v1/ml/report` | Retrieve Markdown and JSON experiment evaluation report |
+| `POST` | `/api/v1/ml/train` | Retrain all 5 ML models on latest PostgreSQL database |
+| `POST` | `/api/v1/ml/predict/clv` | Predict Customer Lifetime Value ($) and VIP status |
+| `POST` | `/api/v1/ml/predict/demand` | Forecast product unit demand and stock depletion risk |
+| `POST` | `/api/v1/ml/predict/order-status` | Predict order delay risk and delivery schedule status |
+| `POST` | `/api/v1/ml/predict/churn` | Predict customer churn probability and retention strategy |
+| `POST` | `/api/v1/ml/predict/recommend` | Generate Top-K personalized product recommendations |
+

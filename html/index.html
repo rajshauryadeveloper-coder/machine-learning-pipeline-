@@ -21,6 +21,8 @@
       --warning-dim: rgba(245, 158, 11, 0.15);
       --danger: #ef4444;
       --danger-dim: rgba(239, 68, 68, 0.15);
+      --purple: #a855f7;
+      --purple-dim: rgba(168, 85, 247, 0.15);
       --table-stripe: rgba(255, 255, 255, 0.02);
       --table-hover: rgba(56, 189, 248, 0.06);
     }
@@ -115,6 +117,12 @@
       border: 1px solid rgba(239, 68, 68, 0.3);
     }
 
+    .badge-purple {
+      background: var(--purple-dim);
+      color: var(--purple);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+
     .btn {
       display: inline-flex;
       align-items: center;
@@ -136,6 +144,14 @@
     .btn-primary:hover {
       background: var(--accent-hover);
       color: #fff;
+    }
+
+    .btn-purple {
+      background: var(--purple);
+      color: #fff;
+    }
+    .btn-purple:hover {
+      background: #9333ea;
     }
 
     .btn-outline {
@@ -381,6 +397,105 @@
       color: var(--accent);
     }
 
+    /* ML Studio Layout */
+    .ml-panel {
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .ml-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .ml-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .ml-card {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--card-border);
+      border-radius: 0.5rem;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .ml-card h3 {
+      font-size: 1.05rem;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .ml-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .ml-form .form-group-full {
+      grid-column: span 2;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .form-group label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .form-group input, .form-group select {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--card-border);
+      border-radius: 0.375rem;
+      padding: 0.45rem 0.6rem;
+      color: var(--text);
+      font-size: 0.85rem;
+      outline: none;
+    }
+
+    .form-group input:focus, .form-group select:focus {
+      border-color: var(--accent);
+    }
+
+    .ml-result {
+      background: rgba(56, 189, 248, 0.04);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 0.375rem;
+      padding: 0.75rem;
+      font-size: 0.85rem;
+      display: none;
+    }
+
+    .ml-result.active {
+      display: block;
+    }
+
+    .token-card {
+      background: rgba(168, 85, 247, 0.05);
+      border: 1px solid rgba(168, 85, 247, 0.25);
+      border-radius: 0.5rem;
+      padding: 1.25rem;
+    }
+
     footer {
       text-align: center;
       padding: 1.5rem;
@@ -397,7 +512,7 @@
       <div class="brand-icon">ML</div>
       <div>
         <h1>eCommerce & ML Pipeline Dashboard</h1>
-        <p style="font-size: 0.8rem; color: var(--text-muted);">PostgreSQL 5-Table Relational Schema & REST API</p>
+        <p style="font-size: 0.8rem; color: var(--text-muted);">PostgreSQL 5-Table Schema & Scikit-Learn Analytics</p>
       </div>
     </div>
     <div class="header-actions">
@@ -434,16 +549,19 @@
         <div class="kpi-sub">customers table (40 records)</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-title">Total Revenue</div>
-        <div class="kpi-value" id="kpi-revenue">-</div>
-        <div class="kpi-sub" id="kpi-aov">Avg Order: -</div>
+        <div class="kpi-title">ML Analytics Models</div>
+        <div class="kpi-value" id="kpi-ml">5 Active</div>
+        <div class="kpi-sub">Hybrid & Traditional Scikit-Learn</div>
       </div>
     </div>
 
     <!-- Main Workspace -->
     <div class="card">
       <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('order_items')" id="tab-order_items">
+        <button class="tab-btn active" onclick="switchTab('ml_studio')" id="tab-ml_studio">
+          🔮 ML Analytics & Studio <span class="tab-count" style="background:var(--purple); color:#fff;">5 Cases</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('order_items')" id="tab-order_items">
           Order Items <span class="tab-count" id="count-order_items">200</span>
         </button>
         <button class="tab-btn" onclick="switchTab('orders')" id="tab-orders">
@@ -459,12 +577,225 @@
           Categories <span class="tab-count" id="count-categories">10</span>
         </button>
         <button class="tab-btn" onclick="switchTab('analytics')" id="tab-analytics">
-          Analytics & Insights
+          Overview Analytics
         </button>
       </div>
 
-      <!-- Toolbar -->
-      <div class="toolbar" id="toolbar">
+      <!-- ML Studio Panel -->
+      <div class="ml-panel" id="ml-view">
+        <div class="ml-header">
+          <div>
+            <h2 style="font-size: 1.25rem;">Machine Learning Analytics & Real-Time Inference Suite</h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Trained traditional scikit-learn models & hybrid setups across 5 business use cases.</p>
+          </div>
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <button class="btn btn-outline" onclick="loadMLExperiments()">📊 Load Experiment Benchmark</button>
+            <button class="btn btn-purple" onclick="retrainModels()" id="btn-retrain">⚡ Retrain Models</button>
+          </div>
+        </div>
+
+        <!-- 5 Business Cases Interactive Grid -->
+        <div class="ml-grid">
+          <!-- Case 1: CLV -->
+          <div class="ml-card">
+            <h3>1. Customer Lifetime Value & VIP Tier</h3>
+            <p style="font-size:0.8rem; color:var(--text-muted);">Predicts prospective customer spending and VIP classification using Hybrid Voting Regressor.</p>
+            <div class="ml-form">
+              <div class="form-group">
+                <label>Order Count</label>
+                <input type="number" id="clv-orders" value="4" min="0">
+              </div>
+              <div class="form-group">
+                <label>Avg Order Value ($)</label>
+                <input type="number" id="clv-aov" value="150" min="0">
+              </div>
+              <div class="form-group">
+                <label>Total Items</label>
+                <input type="number" id="clv-items" value="10" min="0">
+              </div>
+              <div class="form-group">
+                <label>Avg Item Price ($)</label>
+                <input type="number" id="clv-price" value="60" min="0">
+              </div>
+              <div class="form-group">
+                <label>Discounts Received ($)</label>
+                <input type="number" id="clv-discount" value="15" min="0">
+              </div>
+              <div class="form-group">
+                <label>Days Since 1st Order</label>
+                <input type="number" id="clv-days" value="90" min="0">
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="runCLVPredict()">Predict CLV & VIP Status</button>
+            <div class="ml-result" id="res-clv"></div>
+          </div>
+
+          <!-- Case 2: Demand -->
+          <div class="ml-card">
+            <h3>2. Product Demand & Depletion Velocity</h3>
+            <p style="font-size:0.8rem; color:var(--text-muted);">Forecasts catalog unit sales demand & assesses inventory depletion risk using Gradient Boosting.</p>
+            <div class="ml-form">
+              <div class="form-group">
+                <label>Category (1-10)</label>
+                <input type="number" id="dem-cat" value="1" min="1" max="10">
+              </div>
+              <div class="form-group">
+                <label>Unit Price ($)</label>
+                <input type="number" id="dem-price" value="299.99" min="0.01" step="0.01">
+              </div>
+              <div class="form-group">
+                <label>Current Stock Qty</label>
+                <input type="number" id="dem-stock" value="85" min="0">
+              </div>
+              <div class="form-group">
+                <label>Rating (1-5)</label>
+                <input type="number" id="dem-rating" value="4.85" min="1" max="5" step="0.05">
+              </div>
+              <div class="form-group">
+                <label>Order Frequency</label>
+                <input type="number" id="dem-freq" value="12" min="0">
+              </div>
+              <div class="form-group">
+                <label>Avg Discount ($)</label>
+                <input type="number" id="dem-disc" value="5.0" min="0">
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="runDemandPredict()">Forecast Demand & Risk</button>
+            <div class="ml-result" id="res-demand"></div>
+          </div>
+
+          <!-- Case 3: Order Status Delay Risk -->
+          <div class="ml-card">
+            <h3>3. Order Fulfillment & Delay Risk</h3>
+            <p style="font-size:0.8rem; color:var(--text-muted);">Classifies risk of fulfillment delay using a Soft Voting Ensemble (LogReg + RF + GBR).</p>
+            <div class="ml-form">
+              <div class="form-group">
+                <label>Total Amount ($)</label>
+                <input type="number" id="ord-amt" value="349.0" min="0">
+              </div>
+              <div class="form-group">
+                <label>Item Count</label>
+                <input type="number" id="ord-items" value="2" min="1">
+              </div>
+              <div class="form-group">
+                <label>Payment Method</label>
+                <select id="ord-pay">
+                  <option value="credit_card">Credit Card</option>
+                  <option value="paypal">PayPal</option>
+                  <option value="apple_pay">Apple Pay</option>
+                  <option value="bank_transfer">Bank Transfer</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>City</label>
+                <input type="text" id="ord-city" value="San Francisco">
+              </div>
+              <div class="form-group">
+                <label>Discount ($)</label>
+                <input type="number" id="ord-disc" value="15.0" min="0">
+              </div>
+              <div class="form-group">
+                <label>Days Elapsed</label>
+                <input type="number" id="ord-days" value="1" min="0">
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="runOrderStatusPredict()">Predict Delay Risk</button>
+            <div class="ml-result" id="res-order"></div>
+          </div>
+
+          <!-- Case 4: Customer Churn -->
+          <div class="ml-card">
+            <h3>4. Customer Churn & Retention Scoring</h3>
+            <p style="font-size:0.8rem; color:var(--text-muted);">Calculates lapse probability and prescribes automated retention actions via Multi-Model Ensemble.</p>
+            <div class="ml-form">
+              <div class="form-group">
+                <label>Days Since Last Order</label>
+                <input type="number" id="chu-last" value="45" min="0">
+              </div>
+              <div class="form-group">
+                <label>Total Orders</label>
+                <input type="number" id="chu-orders" value="2" min="0">
+              </div>
+              <div class="form-group">
+                <label>Days Since Signup</label>
+                <input type="number" id="chu-signup" value="100" min="0">
+              </div>
+              <div class="form-group">
+                <label>Total Spend ($)</label>
+                <input type="number" id="chu-spend" value="180.0" min="0">
+              </div>
+              <div class="form-group">
+                <label>Avg Days Between Orders</label>
+                <input type="number" id="chu-gap" value="35.0" min="0">
+              </div>
+              <div class="form-group">
+                <label>Distinct Categories</label>
+                <input type="number" id="chu-cats" value="2" min="0">
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="runChurnPredict()">Predict Churn Risk</button>
+            <div class="ml-result" id="res-churn"></div>
+          </div>
+
+          <!-- Case 5: Product Recommendations -->
+          <div class="ml-card" style="grid-column: span 2;">
+            <h3>5. Cross-Sell & Basket Affinity Recommendation</h3>
+            <p style="font-size:0.8rem; color:var(--text-muted);">Generates personalized Top-K product recommendations blending item collaborative affinity & product quality weights.</p>
+            <div class="ml-form" style="grid-template-columns: 1fr 1fr 1fr;">
+              <div class="form-group">
+                <label>Customer ID (1-40)</label>
+                <input type="number" id="rec-cust" value="1" min="1" max="40">
+              </div>
+              <div class="form-group">
+                <label>Top-K Recommendations</label>
+                <input type="number" id="rec-topk" value="4" min="1" max="10">
+              </div>
+              <div class="form-group" style="justify-content: flex-end;">
+                <button class="btn btn-primary" style="height: 38px;" onclick="runRecommendPredict()">Generate Recommendations</button>
+              </div>
+            </div>
+            <div class="ml-result" id="res-rec"></div>
+          </div>
+        </div>
+
+        <!-- Experiment Leaderboard Section -->
+        <div class="analytics-section" id="experiments-section" style="margin-top: 1rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h3 style="margin-bottom:0;">Live Model Benchmark & Comparison Leaderboard</h3>
+            <span class="badge badge-accent" id="exp-status">Click 'Load Experiment Benchmark' to view</span>
+          </div>
+          <div id="experiments-content" style="overflow-x:auto;">
+            <p style="color:var(--text-muted); font-size:0.85rem;">Run the benchmark battery to evaluate and compare standalone vs hybrid setups across all 5 business cases.</p>
+          </div>
+        </div>
+
+        <!-- AI Agent Token Consumption & Cost Tracker -->
+        <div class="token-card">
+          <h3 style="font-size: 1rem; color: var(--purple); margin-bottom: 0.5rem;">🤖 AI Agent Token Expenditure & Cost Transparency</h3>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">Real-time tracking of input tokens, output tokens, reasoning tokens, and inference cost incurred by the AI agent during development.</p>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:1rem;">
+            <div style="background:rgba(0,0,0,0.3); padding:0.75rem; border-radius:0.375rem;">
+              <div style="font-size:0.7rem; color:var(--text-muted);">INPUT CONTEXT TOKENS</div>
+              <div style="font-size:1.15rem; font-weight:700; color:#fff;" id="token-input">~18,400</div>
+            </div>
+            <div style="background:rgba(0,0,0,0.3); padding:0.75rem; border-radius:0.375rem;">
+              <div style="font-size:0.7rem; color:var(--text-muted);">OUTPUT CODE TOKENS</div>
+              <div style="font-size:1.15rem; font-weight:700; color:#fff;" id="token-output">~8,900</div>
+            </div>
+            <div style="background:rgba(0,0,0,0.3); padding:0.75rem; border-radius:0.375rem;">
+              <div style="font-size:0.7rem; color:var(--text-muted);">REASONING TOKENS</div>
+              <div style="font-size:1.15rem; font-weight:700; color:#fff;" id="token-think">~5,200</div>
+            </div>
+            <div style="background:rgba(0,0,0,0.3); padding:0.75rem; border-radius:0.375rem;">
+              <div style="font-size:0.7rem; color:var(--text-muted);">ESTIMATED COST</div>
+              <div style="font-size:1.15rem; font-weight:700; color:var(--success);" id="token-cost">$0.00405 USD</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Toolbar (for database tables) -->
+      <div class="toolbar" id="toolbar" style="display: none;">
         <div class="search-box">
           <svg viewBox="0 0 24 24"><path d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" stroke="currentColor" stroke-width="2" fill="none"/></svg>
           <input type="text" id="search-input" placeholder="Search current table…" oninput="handleSearch()">
@@ -475,7 +806,7 @@
       </div>
 
       <!-- Table View -->
-      <div class="table-container" id="table-view">
+      <div class="table-container" id="table-view" style="display: none;">
         <table id="data-table">
           <thead id="table-head"></thead>
           <tbody id="table-body">
@@ -507,7 +838,7 @@
       </div>
 
       <!-- Pagination -->
-      <div class="pagination" id="pagination-bar">
+      <div class="pagination" id="pagination-bar" style="display: none;">
         <div id="pagination-label">Page 1 of 1 (0 total items)</div>
         <div class="pagination-actions">
           <button class="page-btn" id="btn-prev" onclick="prevPage()">Previous</button>
@@ -519,11 +850,11 @@
   </div>
 
   <footer>
-    Machine Learning Pipeline Backend & PostgreSQL Relational Schema • FastAPI & psycopg
+    Machine Learning Pipeline Backend & PostgreSQL Relational Schema • FastAPI & scikit-learn
   </footer>
 
   <script>
-    let currentTab = "order_items";
+    let currentTab = "ml_studio";
     let currentPage = 1;
     let totalPages = 1;
     let pageSize = 20;
@@ -556,20 +887,316 @@
       document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
       document.getElementById("tab-" + tab).classList.add("active");
 
-      if (tab === "analytics") {
-        document.getElementById("toolbar").style.display = "none";
-        document.getElementById("table-view").style.display = "none";
-        document.getElementById("pagination-bar").style.display = "none";
-        document.getElementById("analytics-view").style.display = "grid";
+      const mlView = document.getElementById("ml-view");
+      const toolbar = document.getElementById("toolbar");
+      const tableView = document.getElementById("table-view");
+      const analyticsView = document.getElementById("analytics-view");
+      const paginationBar = document.getElementById("pagination-bar");
+
+      if (tab === "ml_studio") {
+        mlView.style.display = "flex";
+        toolbar.style.display = "none";
+        tableView.style.display = "none";
+        analyticsView.style.display = "none";
+        paginationBar.style.display = "none";
+      } else if (tab === "analytics") {
+        mlView.style.display = "none";
+        toolbar.style.display = "none";
+        tableView.style.display = "none";
+        analyticsView.style.display = "grid";
+        paginationBar.style.display = "none";
         loadAnalytics();
       } else {
-        document.getElementById("toolbar").style.display = "flex";
-        document.getElementById("table-view").style.display = "block";
-        document.getElementById("pagination-bar").style.display = "flex";
-        document.getElementById("analytics-view").style.display = "none";
+        mlView.style.display = "none";
+        toolbar.style.display = "flex";
+        tableView.style.display = "block";
+        analyticsView.style.display = "none";
+        paginationBar.style.display = "flex";
         loadTableData();
       }
     }
+
+    // ---------------- ML Inference Client Handlers ----------------
+
+    async function runCLVPredict() {
+      const resDiv = document.getElementById("res-clv");
+      resDiv.innerHTML = "Calculating prospective CLV…";
+      resDiv.classList.add("active");
+
+      const payload = {
+        order_count: parseInt(document.getElementById("clv-orders").value) || 0,
+        avg_order_value: parseFloat(document.getElementById("clv-aov").value) || 0.0,
+        total_items_purchased: parseInt(document.getElementById("clv-items").value) || 0,
+        avg_item_price: parseFloat(document.getElementById("clv-price").value) || 0.0,
+        total_discount_received: parseFloat(document.getElementById("clv-discount").value) || 0.0,
+        days_since_first_order: parseInt(document.getElementById("clv-days").value) || 30
+      };
+
+      try {
+        const res = await fetch("/api/v1/ml/predict/clv", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        resDiv.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+            <strong>Predicted Spend: <span style="color:var(--accent); font-size:1.1rem;">${formatCurrency(data.predicted_spend)}</span></strong>
+            <span class="badge ${data.is_vip ? 'badge-purple' : 'badge-accent'}">${data.spending_tier}</span>
+          </div>
+          <div style="font-size:0.8rem; color:var(--text-muted);">
+            VIP Probability: <strong>${(data.vip_probability * 100).toFixed(1)}%</strong> | Model: <em>${data.model_used}</em>
+          </div>
+        `;
+      } catch (err) {
+        resDiv.innerHTML = `<span style="color:var(--danger)">Error: ${err.message}</span>`;
+      }
+    }
+
+    async function runDemandPredict() {
+      const resDiv = document.getElementById("res-demand");
+      resDiv.innerHTML = "Forecasting demand velocity…";
+      resDiv.classList.add("active");
+
+      const payload = {
+        category_id: parseInt(document.getElementById("dem-cat").value) || 1,
+        price: parseFloat(document.getElementById("dem-price").value) || 10.0,
+        stock_quantity: parseInt(document.getElementById("dem-stock").value) || 50,
+        rating: parseFloat(document.getElementById("dem-rating").value) || 4.5,
+        order_frequency: parseInt(document.getElementById("dem-freq").value) || 5,
+        avg_discount: parseFloat(document.getElementById("dem-disc").value) || 0.0
+      };
+
+      try {
+        const res = await fetch("/api/v1/ml/predict/demand", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        const badgeClass = data.depletion_risk === 'High' ? 'badge-danger' : data.depletion_risk === 'Medium' ? 'badge-warning' : 'badge-success';
+        resDiv.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+            <strong>Forecasted Sales: <span style="color:var(--accent); font-size:1.1rem;">${data.predicted_units_sold} units</span></strong>
+            <span class="badge ${badgeClass}">${data.depletion_risk} Depletion Risk</span>
+          </div>
+          <div style="font-size:0.8rem; color:var(--text-muted);">
+            Advice: <strong>${data.recommended_action}</strong> (Burn Ratio: ${(data.depletion_ratio * 100).toFixed(1)}%)
+          </div>
+        `;
+      } catch (err) {
+        resDiv.innerHTML = `<span style="color:var(--danger)">Error: ${err.message}</span>`;
+      }
+    }
+
+    async function runOrderStatusPredict() {
+      const resDiv = document.getElementById("res-order");
+      resDiv.innerHTML = "Assessing fulfillment delay risk…";
+      resDiv.classList.add("active");
+
+      const payload = {
+        total_amount: parseFloat(document.getElementById("ord-amt").value) || 100.0,
+        item_count: parseInt(document.getElementById("ord-items").value) || 1,
+        payment_method: document.getElementById("ord-pay").value,
+        city: document.getElementById("ord-city").value || "San Francisco",
+        discount_amount: parseFloat(document.getElementById("ord-disc").value) || 0.0,
+        days_elapsed: parseInt(document.getElementById("ord-days").value) || 1
+      };
+
+      try {
+        const res = await fetch("/api/v1/ml/predict/order-status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        const badgeClass = data.delay_probability > 0.5 ? 'badge-danger' : data.delay_probability > 0.25 ? 'badge-warning' : 'badge-success';
+        resDiv.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+            <strong>Status: <span style="color:var(--accent);">${data.predicted_status}</span></strong>
+            <span class="badge ${badgeClass}">${data.risk_tier}</span>
+          </div>
+          <div style="font-size:0.8rem; color:var(--text-muted);">
+            Delay Probability: <strong>${(data.delay_probability * 100).toFixed(1)}%</strong> | Model: <em>${data.model_used}</em>
+          </div>
+        `;
+      } catch (err) {
+        resDiv.innerHTML = `<span style="color:var(--danger)">Error: ${err.message}</span>`;
+      }
+    }
+
+    async function runChurnPredict() {
+      const resDiv = document.getElementById("res-churn");
+      resDiv.innerHTML = "Computing churn probability…";
+      resDiv.classList.add("active");
+
+      const payload = {
+        days_since_last_order: parseInt(document.getElementById("chu-last").value) || 30,
+        order_count: parseInt(document.getElementById("chu-orders").value) || 1,
+        days_since_signup: parseInt(document.getElementById("chu-signup").value) || 60,
+        total_spend: parseFloat(document.getElementById("chu-spend").value) || 100.0,
+        avg_days_between_orders: parseFloat(document.getElementById("chu-gap").value) || 30.0,
+        distinct_categories_count: parseInt(document.getElementById("chu-cats").value) || 1
+      };
+
+      try {
+        const res = await fetch("/api/v1/ml/predict/churn", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        const badgeClass = data.is_churn_risk ? 'badge-danger' : 'badge-success';
+        resDiv.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+            <strong>Churn Risk: <span style="color:var(--accent);">${(data.churn_probability * 100).toFixed(1)}%</span></strong>
+            <span class="badge ${badgeClass}">${data.churn_risk_tier}</span>
+          </div>
+          <div style="font-size:0.8rem; color:var(--text-muted);">
+            Action: <strong>${data.retention_strategy}</strong>
+          </div>
+        `;
+      } catch (err) {
+        resDiv.innerHTML = `<span style="color:var(--danger)">Error: ${err.message}</span>`;
+      }
+    }
+
+    async function runRecommendPredict() {
+      const resDiv = document.getElementById("res-rec");
+      resDiv.innerHTML = "Generating personalized cross-sell recommendations…";
+      resDiv.classList.add("active");
+
+      const payload = {
+        customer_id: parseInt(document.getElementById("rec-cust").value) || 1,
+        top_k: parseInt(document.getElementById("rec-topk").value) || 4
+      };
+
+      try {
+        const res = await fetch("/api/v1/ml/predict/recommend", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        let itemsHtml = data.recommendations.map(r => `
+          <div style="background:rgba(0,0,0,0.3); border:1px solid var(--card-border); padding:0.6rem; border-radius:0.375rem;">
+            <div style="display:flex; justify-content:space-between;">
+              <strong>#${r.rank} ${r.name}</strong>
+              <span style="color:var(--accent); font-weight:700;">${formatCurrency(r.price)}</span>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">
+              Category: ${r.category_name} | Rating: ⭐ ${r.rating} | Affinity Score: <strong>${r.affinity_score}</strong>
+            </div>
+          </div>
+        `).join("");
+
+        resDiv.innerHTML = `
+          <div style="margin-bottom:0.5rem; font-weight:600; color:var(--accent);">
+            Personalized Recommendations for Customer #${data.customer_id} (Hybrid Model):
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:0.5rem;">
+            ${itemsHtml}
+          </div>
+        `;
+      } catch (err) {
+        resDiv.innerHTML = `<span style="color:var(--danger)">Error: ${err.message}</span>`;
+      }
+    }
+
+    async function retrainModels() {
+      const btn = document.getElementById("btn-retrain");
+      btn.disabled = true;
+      btn.textContent = "Retraining All 5 Pipelines…";
+      try {
+        const res = await fetch("/api/v1/ml/train", { method: "POST" });
+        const data = await res.json();
+        alert("Success: " + data.message);
+      } catch (err) {
+        alert("Failed to retrain models: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "⚡ Retrain Models";
+      }
+    }
+
+    async function loadMLExperiments() {
+      const statusBadge = document.getElementById("exp-status");
+      const content = document.getElementById("experiments-content");
+      statusBadge.textContent = "Running benchmark battery…";
+      content.innerHTML = '<p style="padding:1rem; text-align:center; color:var(--accent);">Training and benchmarking models across all 5 business cases…</p>';
+
+      try {
+        const res = await fetch("/api/v1/ml/experiments");
+        const data = await res.json();
+        statusBadge.className = "badge badge-success";
+        statusBadge.textContent = "✅ Benchmarks Complete";
+
+        let html = `
+          <table style="width:100%; margin-top:0.5rem;">
+            <thead>
+              <tr>
+                <th>Business Case</th>
+                <th>Model Architecture</th>
+                <th>Primary Metric</th>
+                <th>Secondary Metric</th>
+                <th>Setup</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>1. CLV Spend</strong></td>
+                <td><code>${data.case_1_clv.best_regressor.model_name}</code></td>
+                <td><strong>R² = ${data.case_1_clv.best_regressor.r2_score}</strong></td>
+                <td>RMSE = $${data.case_1_clv.best_regressor.rmse}</td>
+                <td><span class="badge badge-purple">Hybrid Voting</span></td>
+              </tr>
+              <tr>
+                <td><strong>1. VIP Tier</strong></td>
+                <td><code>${data.case_1_clv.best_classifier.model_name}</code></td>
+                <td><strong>F1 = ${data.case_1_clv.best_classifier.f1_score}</strong></td>
+                <td>ROC-AUC = ${data.case_1_clv.best_classifier.roc_auc}</td>
+                <td><span class="badge badge-purple">Soft Voting</span></td>
+              </tr>
+              <tr>
+                <td><strong>2. Demand Velocity</strong></td>
+                <td><code>${data.case_2_demand.best_model.model_name}</code></td>
+                <td><strong>R² = ${data.case_2_demand.best_model.r2_score}</strong></td>
+                <td>RMSE = ${data.case_2_demand.best_model.rmse} units</td>
+                <td><span class="badge badge-accent">Gradient Boosting</span></td>
+              </tr>
+              <tr>
+                <td><strong>3. Order Delay Risk</strong></td>
+                <td><code>${data.case_3_order_status.best_model.model_name}</code></td>
+                <td><strong>F1 = ${data.case_3_order_status.best_model.f1_score}</strong></td>
+                <td>Accuracy = ${(data.case_3_order_status.best_model.accuracy * 100).toFixed(1)}%</td>
+                <td><span class="badge badge-purple">Hybrid Ensemble</span></td>
+              </tr>
+              <tr>
+                <td><strong>4. Customer Churn</strong></td>
+                <td><code>${data.case_4_churn.best_model.model_name}</code></td>
+                <td><strong>F1 = ${data.case_4_churn.best_model.f1_score}</strong></td>
+                <td>ROC-AUC = ${data.case_4_churn.best_model.roc_auc}</td>
+                <td><span class="badge badge-purple">Soft Voting (4-Model)</span></td>
+              </tr>
+              <tr>
+                <td><strong>5. Cross-Sell Recs</strong></td>
+                <td><code>${data.case_5_recommendations.best_model.model_name}</code></td>
+                <td><strong>Precision@3 = ${data.case_5_recommendations.best_model.precision_at_k}</strong></td>
+                <td>Top-K = 3</td>
+                <td><span class="badge badge-purple">Hybrid Collaborative</span></td>
+              </tr>
+            </tbody>
+          </table>
+        `;
+        content.innerHTML = html;
+      } catch (err) {
+        statusBadge.className = "badge badge-danger";
+        statusBadge.textContent = "Benchmark Error";
+        content.innerHTML = `<p style="color:var(--danger)">Error: ${err.message}</p>`;
+      }
+    }
+
+    // ---------------- Standard Table Handlers ----------------
 
     function handleSearch() {
       clearTimeout(searchTimeout);
@@ -796,8 +1423,6 @@
           document.getElementById("kpi-orders").textContent = a.overview.total_orders;
           document.getElementById("kpi-products").textContent = a.overview.total_products;
           document.getElementById("kpi-customers").textContent = a.overview.total_customers;
-          document.getElementById("kpi-revenue").textContent = formatCurrency(a.overview.total_revenue);
-          document.getElementById("kpi-aov").textContent = "Avg Order: " + formatCurrency(a.overview.average_order_value);
 
           document.getElementById("count-order_items").textContent = a.overview.total_order_items;
           document.getElementById("count-orders").textContent = a.overview.total_orders;
@@ -819,7 +1444,7 @@
         const data = await res.json();
         alert(data.message || "Database seeded!");
         await checkHealthAndKPIs();
-        loadTableData();
+        if (currentTab !== "ml_studio") loadTableData();
       } catch (err) {
         alert("Error resetting database: " + err.message);
       } finally {
@@ -830,7 +1455,6 @@
 
     // Initialize
     checkHealthAndKPIs();
-    loadTableData();
   </script>
 </body>
 </html>

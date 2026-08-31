@@ -5,6 +5,7 @@ from src.api.v1.endpoints import (
     categories,
     customers,
     database,
+    ml,
     order_items,
     orders,
     products,
@@ -19,3 +20,4 @@ api_router.include_router(orders.router)
 api_router.include_router(order_items.router)
 api_router.include_router(analytics.router)
 api_router.include_router(database.router)
+api_router.include_router(ml.router)
